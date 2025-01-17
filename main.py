@@ -1,5 +1,5 @@
 from solve_methods import *
-from examples import *
+from differential_equations import *
 from pysindy_methods import *
 
 #For Lorenz
