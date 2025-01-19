@@ -17,15 +17,17 @@ class PysindyFunctions:
         self.differentiation_method = ps.FiniteDifference(order=order)
         self.feature_library = ps.PolynomialLibrary(degree=degree)
         self.optimizer = ps.STLSQ(threshold=threshold)
+        self.cr = CreateSymbols(len(self.matrix))
 
     def create_model(self):
         """
         Create a model for the equation.
         """
+
         model = ps.SINDy(differentiation_method=self.differentiation_method,
                          feature_library=self.feature_library,
                          optimizer=self.optimizer,
-                         feature_names=create_variables(len(self.matrix)))
+                         feature_names=self.cr.create_variables())
         return model
 
     def model_fit(self):
@@ -45,7 +47,7 @@ class PysindyFunctions:
         model = self.model_fit()
         return model.equations(number_of_decimals)
 
-    def get_feature_names(self) -> list:
+    def get_feature_names(self):
         """
         Get a list of names of features used in the model.
         """
@@ -58,3 +60,15 @@ class PysindyFunctions:
         """
         model = self.model_fit()
         return model.coefficients()
+
+    def process_feature(self,feature):
+        feature = feature.replace('^', '**')
+        feature = feature.replace(' ', '*')
+        return feature
+
+    def sympify_feature(self):
+        dc = self.cr.create_dict()
+        fn = self.get_feature_names()
+        fv = [sp.sympify(self.process_feature(feature),locals=dc) for feature in fn]
+        return fv
+

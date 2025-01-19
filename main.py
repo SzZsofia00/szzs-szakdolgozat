@@ -3,40 +3,28 @@ from differential_equations import *
 from pysindy_methods import *
 
 #For Lorenz
-# init = [0.0,1.0,1.0]
-# time = [0,1]
-# step_size = 0.02
+init = [0.0,1.0,1.0]
+time = [0,1]
+step_size = 0.02
 
-init = [1]
-time = [0,5]
-step_size = 0.1
+# init = [1]
+# time = [0,5]
+# step_size = 0.1
 
 e = ExampleDifferentialEquations()
-diff_eq = e.logistic_growth
+diff_eq = e.lorenz
 
 so = SolveODE(diff_eq,time,init,step_size)
 
 mtx = so.get_matrix_with_noise('euler')
 t = so.create_time_points()
 
-pm = PysindyFunctions(mtx,t,threshold=0.02)
+pm = PysindyFunctions(mtx,t,threshold=0.2)
 model = pm.model_fit()
 model.print()
 
+fv = pm.sympify_feature()
 coef = model.coefficients()
-fn = model.get_feature_names()
-symb = create_symbols(len(mtx))
-
-print(coef)
-print(fn)
-print(symb)
-
-var = create_variables(len(mtx))
-print(var)
-
-for i in fn:
-    i.replace('^','**')
-    print(i)
-
-print(fn)
+sol = coef * fv
+print(sol)
 
