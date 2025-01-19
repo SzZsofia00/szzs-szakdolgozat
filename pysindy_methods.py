@@ -39,13 +39,20 @@ class PysindyFunctions:
         model.fit(self.matrix,t=self.t)
         return model
 
-    def get_model_equations(self,number_of_decimals:int):
+    def get_model_equations(self,number_of_decimals:int=3):
         """
         Get the right hand side of the SINDy model equations for each feature.
         :param int number_of_decimals: The number of decimals in the equation.
         """
         model = self.model_fit()
         return model.equations(number_of_decimals)
+
+    def print_model_equations(self):
+        """
+        Print the model's equation we fitted on the data.
+        """
+        model = self.model_fit()
+        return model.print()
 
     def get_feature_names(self):
         """
@@ -59,14 +66,22 @@ class PysindyFunctions:
         Get the coefficients learned by the model.
         """
         model = self.model_fit()
-        return model.coefficients()
+        coef = model.coefficients()
+        # rounded_coef = np.round(coef,4)
+        return coef
 
     def process_feature(self,feature):
+        """
+        In the features changing the symbols so that simpy can understand the notation.
+        """
         feature = feature.replace('^', '**')
         feature = feature.replace(' ', '*')
         return feature
 
     def sympify_feature(self):
+        """
+        Generate feature vector with symbols.
+        """
         dc = self.cr.create_dict()
         fn = self.get_feature_names()
         fv = [sp.sympify(self.process_feature(feature),locals=dc) for feature in fn]

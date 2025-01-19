@@ -1,5 +1,7 @@
 from scipy.integrate import solve_ivp
 from numerical_method import *
+from ExceptionClass import *
+import sys
 
 class SolveODE:
     def __init__(self,func,time:list,init:list,step_size:float):
@@ -47,25 +49,35 @@ class SolveODE:
         :param str numerical_method: Numerical method.
         :return: np.array
         """
-        matrix = self.fill_matrix_with_init()
-        t = self.create_time_points()
+        try:
+            matrix = self.fill_matrix_with_init()
+            t = self.create_time_points()
 
-        for i in range(len(t) - 1):
-            nm = NumericalMethods(self.func, t[i], matrix[:, i], self.step_size)
-            matrix[:, i + 1] = getattr(nm, numerical_method)()
-        return matrix
+            for i in range(len(t) - 1):
+                nm = NumericalMethods(self.func, t[i], matrix[:, i], self.step_size)
+                matrix[:, i + 1] = getattr(nm, numerical_method)()
+            return matrix
+
+        except DimensionError as e:
+            print(f"Error with the function:\n {e}")
+            sys.exit("Stopping the program due to an error.")
 
     def solve_with_RK45(self) -> np.array:
         """
         Solves the given differential equation with Runge Kutta 45 method.
         :return: np.array
         """
-        matrix = self.fill_matrix_with_init()
-        t = self.create_time_points()
+        try:
+            matrix = self.fill_matrix_with_init()
+            t = self.create_time_points()
 
-        sol = solve_ivp(self.func, self.time, matrix[:, 0], t_eval=t)
-        matrix[:, :] = sol.y
-        return matrix
+            sol = solve_ivp(self.func, self.time, matrix[:, 0], t_eval=t)
+            matrix[:, :] = sol.y
+            return matrix
+
+        except DimensionError as e:
+            print(f"Error with the function:\n {e}")
+            sys.exit("Stopping the program due to an error.")
 
     def generate_data(self,numerical_method:str='RK45') -> np.array:
         """
