@@ -22,11 +22,11 @@ mtx = so.get_matrix_with_noise('euler')
 t = so.create_time_points()
 
 pm = PysindyFunctions(mtx,t,threshold=0.2)
-# pm.print_model_equations()
+pm.print_model_equations()
 
-# fv = pm.sympify_feature()
-# coef = pm.get_coefficients()
-# # rounded_coef = np.round(coef,4)
-# sol = coef * fv
-# print(sol)
+fv = pm.sympify_feature()
+coef = pm.get_coefficients()
+# rounded_coef = np.round(coef,4)
+sol = coef * fv
+print(sol)
 

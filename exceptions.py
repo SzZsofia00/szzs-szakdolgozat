@@ -1,5 +1,3 @@
-import warnings
-
 class DimensionError(Exception):
     pass
 

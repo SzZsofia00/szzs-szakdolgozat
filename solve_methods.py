@@ -1,6 +1,6 @@
 from scipy.integrate import solve_ivp
 from numerical_method import *
-from ExceptionClass import *
+from exceptions import *
 import sys
 
 class SolveODE:

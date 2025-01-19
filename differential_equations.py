@@ -1,5 +1,5 @@
 import numpy as np
-from ExceptionClass import *
+from exceptions import *
 
 class ExampleDifferentialEquations:
     """
