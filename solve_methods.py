@@ -55,7 +55,8 @@ class SolveODE:
 
             for i in range(len(t) - 1):
                 nm = NumericalMethods(self.func, t[i], matrix[:, i], self.step_size)
-                matrix[:, i + 1] = getattr(nm, numerical_method)()
+                # matrix[:, i + 1] = getattr(nm, numerical_method)()
+                matrix[:, i + 1] = nm.step_with(numerical_method)
             return matrix
 
         except DimensionError as e:

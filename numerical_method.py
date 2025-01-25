@@ -14,11 +14,15 @@ class NumericalMethods:
     self.xn = xn
     self.h = h
 
+  def step_with(self, method):
+    return self.xn + self.h * getattr(self, method)()
+
   def euler(self):
     """
     Euler method
     """
-    return self.xn + self.h * np.array(self.func(self.tn,self.xn))
+    # return self.xn + self.h * np.array(self.func(self.tn,self.xn))
+    return np.array(self.func(self.tn, self.xn))
 
   def midpoint_euler(self):
     """
@@ -26,7 +30,8 @@ class NumericalMethods:
     """
     k1 = np.array(self.func(self.tn,self.xn))
     k2 = np.array(self.func(self.tn + self.h/2,self.xn + self.h/2 * k1))
-    return self.xn + self.h * k2
+    # return self.xn + self.h * k2
+    return k2
 
   def RK3(self):
     """
@@ -35,7 +40,8 @@ class NumericalMethods:
     k1 = np.array(self.func(self.tn,self.xn))
     k2 = np.array(self.func(self.tn + self.h/2, self.xn + self.h/2 * k1))
     k3 = np.array(self.func(self.tn + self.h, self.xn + self.h*(-k1 + 2 * k2)))
-    return self.xn + self.h * (k1/6 + k2 * 2/3 + k3/6)
+    # return self.xn + self.h * (k1/6 + k2 * 2/3 + k3/6)
+    return (k1/6 + k2 * 2/3 + k3/6)
 
   def RK4(self):
     """
@@ -45,4 +51,5 @@ class NumericalMethods:
     k2 = np.array(self.func(self.tn + self.h/2,self.xn + self.h/2 * k1))
     k3 = np.array(self.func(self.tn + self.h/2,self.xn + self.h/2 * k2))
     k4 = np.array(self.func(self.tn + self.h,self.xn + self.h * k3))
-    return self.xn + self.h * (k1/6 + k2/3 + k3/3 + k4/6)
+    # return self.xn + self.h * (k1/6 + k2/3 + k3/3 + k4/6)
+    return (k1/6 + k2/3 + k3/3 + k4/6)

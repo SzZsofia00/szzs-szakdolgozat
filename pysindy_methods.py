@@ -17,13 +17,12 @@ class PysindyFunctions:
         self.differentiation_method = ps.FiniteDifference(order=order)
         self.feature_library = ps.PolynomialLibrary(degree=degree)
         self.optimizer = ps.STLSQ(threshold=threshold)
-        self.cr = CreateSymbols(len(self.matrix))
+        self.cr = CreateSymbols(len(matrix))
 
     def create_model(self):
         """
         Create a model for the equation.
         """
-
         model = ps.SINDy(differentiation_method=self.differentiation_method,
                          feature_library=self.feature_library,
                          optimizer=self.optimizer,
