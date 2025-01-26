@@ -20,14 +20,14 @@ class ExampleDifferentialEquations:
         dxdt = 0.2 * x * (8 - x)
         return dxdt
 
-    def lorenz(self,t,xyz):
+    def lorenz(self,t,xyz,sigma=10,rho=28,beta=8/3):
         if len(xyz) != 3:
             raise DimensionError("Dimension error: The length of xyz must be 3.")
 
         x,y,z = xyz
-        dxdt = 10 * (y - x)
-        dydt = x * (28 - z) - y
-        dzdt = x * y - 8 / 3 * z
+        dxdt = sigma * (y - x)
+        dydt = x * (rho - z) - y
+        dzdt = x * y - beta * z
         return [dxdt, dydt, dzdt]
 
     def sin_cos(self,t,x):
