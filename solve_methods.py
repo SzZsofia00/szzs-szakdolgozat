@@ -93,7 +93,7 @@ class SolveODE:
             matrix = self.solve_with_numerical_method(numerical_method)
         return matrix
 
-    def generate_noise(self,be_noise:bool=False,scale:float=1.0) -> np.array:
+    def generate_noise(self,be_noise:bool=False,scale:float=0.01) -> np.array:
         """
         Generate noise for the data if it's true. If false generate zero_matrix so no noise.
         :param bool be_noise: True if we want noise.

@@ -10,32 +10,34 @@ from pysindy_methods import *
 init = [0.0,1.0,1.0]
 time = [0,5]
 step_size = 0.00001
-method = 'euler'
 
-#Differenciálegyenlet
-e = ExampleDifferentialEquations()
-diff_eq = e.lorenz
+methodSy = 'euler'
+be_noise = False
+methodNM = 'euler'
+
+diff_eq = ExampleDifferentialEquations().lorenz
+threshold = 0.02
 
 #Megoldom az ODE-t és generálok belőle adatot
 so = SolveODE(diff_eq,time,init,step_size)
-mtx = so.get_matrix_with_noise(method)
+mtx = so.get_matrix_with_noise(methodSy,be_noise=be_noise)
 t = so.create_time_points()
-
-#Modell illesztés
-pm = PysindyFunctions(mtx,t,threshold=0.02)
+pm = PysindyFunctions(mtx,t,threshold=threshold)
 
 #Egyik módszer
 fv = pm.sympify_feature()
 coef = pm.get_coefficients()
 sol = coef * fv
-print(coef)
+print(sol)
 
 
 #Másik módszer
 symb_init = pm.cr.create_symbols()
 # print(diff_eq(0,symb_init))
 nm = NumericalMethods(diff_eq,0,symb_init,step_size)
-lst = [sp.expand(expr) for expr in getattr(nm,method)()]
+lst = [sp.expand(expr) for expr in getattr(nm,methodNM)()]
+print(lst)
+
 
 new = []
 for l in lst:
@@ -48,7 +50,7 @@ for l in lst:
 new_array = np.array(new)
 
 sol2 = new_array * fv
-print(new_array)
+print(sol2)
 
 
 ############Pandas##################
@@ -71,3 +73,4 @@ summa = 0
 for i in sq_dev:
   summa += i
 print(summa/hossz)
+
