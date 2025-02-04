@@ -17,6 +17,7 @@ class PysindyFunctions:
         self.differentiation_method = ps.FiniteDifference(order=order)
         self.feature_library = ps.PolynomialLibrary(degree=degree)
         self.optimizer = ps.STLSQ(threshold=threshold)
+        # self.optimizer = ps.FROLS()
         self.cr = CreateSymbols(len(matrix))
 
     def create_model(self):
@@ -77,11 +78,14 @@ class PysindyFunctions:
         feature = feature.replace(' ', '*')
         return feature
 
-    def sympify_feature(self):
+    def simpify_feature(self):
         """
         Generate feature vector with symbols.
         """
-        dc = self.cr.create_dict()
+        if len(self.matrix[0])==1:
+            dc = {'x': sp.Symbol('x')}
+        else:
+            dc = self.cr.create_dict()
         fn = self.get_feature_names()
         fv = [sp.sympify(self.process_feature(feature),locals=dc) for feature in fn]
         return fv

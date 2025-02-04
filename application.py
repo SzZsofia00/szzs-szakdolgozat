@@ -15,32 +15,34 @@ class Application:
         pm = PysindyFunctions(mtx, t, threshold=self.params["threshold"])
         return pm
 
-    def model_feature_vector(self):
-        pm = self.sindy_model()
-        fv = pm.sympify_feature()
+    def model_feature_vector(self,model):
+        fv = model.simpify_feature()
         return fv
 
-    def model_coefficients(self):
-        pm = self.sindy_model()
-        coef = pm.get_coefficients()
+    def model_coefficients(self,model):
+        coef = model.get_coefficients()
         return coef
 
-    def model_solution(self):
-        fv = self.model_feature_vector()
-        coef = self.model_coefficients()
+    def model_solution(self,model):
+        fv = self.model_feature_vector(model)
+        coef = self.model_coefficients(model)
         sol = coef * fv
         return sol
 
-    def num_method_with_symbols(self):
-        pm = self.sindy_model()
-        symb_init = pm.cr.create_symbols()
-        nm = NumericalMethods(self.params["diff_eq"], 0, symb_init, self.params["step_size"])
-        lst = [sp.expand(expr) for expr in getattr(nm, self.params["methodNM"])()]
+    def num_method_with_symbols(self,model):
+        if len(self.params["init"]) == 1:
+            symb_init = [sp.Symbol('x')]
+            nm = NumericalMethods(self.params["diff_eq"], 0, symb_init, self.params["step_size"])
+            lst = [sp.expand(expr) for expr in getattr(nm, self.params["methodNM"])()[0]]
+        else:
+            symb_init = model.cr.create_symbols()
+            nm = NumericalMethods(self.params["diff_eq"], 0, symb_init, self.params["step_size"])
+            lst = [sp.expand(expr) for expr in getattr(nm, self.params["methodNM"])()]
         return lst
 
-    def num_method_coefficients(self):
-        lst = self.num_method_with_symbols()
-        fv = self.model_feature_vector()
+    def num_method_coefficients(self,model):
+        lst = self.num_method_with_symbols(model)
+        fv = self.model_feature_vector(model)
 
         new = []
         for l in lst:
@@ -53,26 +55,38 @@ class Application:
         coeff = np.array(new)
         return coeff
 
-    def num_method_solution(self):
-        fv = self.model_feature_vector()
-        coeff = self.num_method_coefficients()
+    def num_method_solution(self,model):
+        fv = self.model_feature_vector(model)
+        coeff = self.num_method_coefficients(model)
         return coeff * fv
 
-    def create_table_of_solutions(self):
-        fv = self.model_feature_vector()
-        header = [str(expr) for expr in fv]
-        df_sindy = pd.DataFrame(self.model_coefficients(),
-                                index=["sindy-vel dx", "sindy-vel dy", "sindy-vel dz"],
-                                columns=header)
-        df_nm = pd.DataFrame(self.num_method_coefficients(),
-                             index=["nm-vel dx", "nm-vel dy", "nm-vel dz"],
-                             columns=header)
-        df = pd.concat([df_sindy, df_nm])
-        print(tabulate(df, headers=header))
+    def create_index_for_df(self,method):
+        var = [" dx", " dy", " dz"]
+        indx = []
+        for i in range(len(self.params["init"])):
+          indx.append(f"{method}{var[i]}")
+        return indx
 
-    def squared_deviation(self):
-        coef_model = self.model_coefficients()
-        coefNM = self.num_method_coefficients()
+    def create_header_for_df(self,model):
+        fv = self.model_feature_vector(model)
+        header = [str(expr) for expr in fv]
+        return header
+
+    def create_dataframe(self,model,coeff,method):
+        header = self.create_header_for_df(model)
+        indx = self.create_index_for_df(method)
+        df = pd.DataFrame(coeff,index=indx,columns=header)
+        return df
+
+    def create_table_of_solutions(self,model):
+        df_sindy = self.create_dataframe(model,self.model_coefficients(model),"sindy")
+        df_nm = self.create_dataframe(model,self.num_method_coefficients(model),"nm")
+        df = pd.concat([df_sindy, df_nm])
+        print(tabulate(df, headers=self.create_header_for_df(model)))
+
+    def squared_deviation(self,model):
+        coef_model = self.model_coefficients(model)
+        coefNM = self.num_method_coefficients(model)
 
         sq_dev = (coef_model.reshape(1, -1)[0] - coefNM.reshape(1, -1)[0]) ** 2
         length = len(coefNM.reshape(1, -1)[0])

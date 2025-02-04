@@ -11,7 +11,7 @@ class NumericalMethods:
     """
     self.func = func
     self.tn = tn
-    self.xn = xn
+    self.xn = np.array(xn)
     self.h = h
 
   def step_with(self, method):
