@@ -34,6 +34,8 @@ for eq_name,eq_func in equations.items():
             parameters["diff_eq"] = eq_func
             parameters["methodSy"] = mS
             parameters["methodNM"] = mNM
+            if eq_name == "exponential_growth" or eq_name == "logistic_growth":
+                parameters["init"] = [1]
             if eq_name == "linear2d" or eq_name == "lotka_volterra":
                 parameters["init"] = [1,1]
             elif eq_name == "linear3d" or eq_name == "lorenz":
