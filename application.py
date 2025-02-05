@@ -33,7 +33,10 @@ class Application:
         if len(self.params["init"]) == 1:
             symb_init = [sp.Symbol('x')]
             nm = NumericalMethods(self.params["diff_eq"], 0, symb_init, self.params["step_size"])
-            lst = [sp.expand(expr) for expr in getattr(nm, self.params["methodNM"])()[0]]
+            if self.params["methodNM"] == "euler" or self.params["methodSy"] == "euler":
+                lst = [sp.expand(expr) for expr in getattr(nm, self.params["methodNM"])()[0]]
+            else:
+                lst = [sp.expand(expr) for expr in getattr(nm, self.params["methodNM"])()[0][0]]
         else:
             symb_init = model.cr.create_symbols()
             nm = NumericalMethods(self.params["diff_eq"], 0, symb_init, self.params["step_size"])
@@ -93,4 +96,5 @@ class Application:
         summa = 0
         for i in sq_dev:
             summa += i
-        print("Squared deviation: ", summa / length)
+        # print("Squared deviation: ", summa / length)
+        return summa / length
