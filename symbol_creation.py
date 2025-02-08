@@ -1,24 +1,23 @@
 import sympy as sp
-import numpy as np
 
 class CreateSymbols:
     def __init__(self,dimension:int):
         self.dimension = dimension
 
-    def create_variables(self) -> np.array:
+    def create_variables(self) -> list:
         """
         Create an array of different variables.
-        :return: np.array
+        :return: list: String of variables in a list
         """
         variables = []
         for i in range(self.dimension):
           variables.append(chr(120+i))
         return variables
 
-    def create_symbols(self) -> np.array:
+    def create_symbols(self) -> list:
         """
         Create an array of symbols from variables.
-        :return: np.array
+        :return: list
         """
         variables = self.create_variables()
         symbols = []
@@ -27,7 +26,7 @@ class CreateSymbols:
           symbols.append(new_symb)
         return symbols
 
-    def create_xyz_symb(self) -> np.array:
+    def create_xyz_symb(self) -> list:
         """
         Create an array of symbols depending on the dimension.
         :return: np.array
@@ -35,7 +34,7 @@ class CreateSymbols:
         symb = []
         if self.dimension == 1:
             x = self.create_symbols()
-            symb = [x]
+            symb = x
         elif self.dimension == 2:
             x,y = self.create_symbols()
             symb = [x,y]

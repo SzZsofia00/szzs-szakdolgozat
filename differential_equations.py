@@ -67,6 +67,31 @@ class ExampleDifferentialEquations:
         dzdt = x * y - beta * z
         return [dxdt, dydt, dzdt]
 
+    def rossler(self,t,xyz,a=0.2,b=0.2,c=5.7): #ezek Rossler szamai, azota tipikusan rendre ezeket hasznaltak: 0.1,0.1,14
+        if len(xyz) != 3:
+            raise DimensionError("Dimension error: The length of xyz must be 3.")
+
+        x,y,z = xyz
+        dxdt = - y - z
+        dydt = x + a * y
+        dzdt = b + z * (x - c)
+        return [dxdt, dydt, dzdt]
+
+    def chua_circuit(self,t,xyz,a=-1.4325,b=-0.7831,alpha=10,beta=15):
+        if len(xyz) != 3:
+            raise DimensionError("Dimension error: The length of xyz must be 3.")
+
+        x,y,z = xyz
+        f = b * x + (a - b) / 2 * (abs(x + 1) - abs(x - 1))
+        dxdt = alpha * (y - x - f)
+        dydt = x - y + z
+        dzdt = - beta * (y - z)
+        return [dxdt, dydt, dzdt]
+
+        #nem biztos h jól írtam fel, még utána kéne olvasni h most mi a jó
+        # https://www.cfm.brown.edu/people/dobrush/am34/Mathematica/ch3/chua.html
+        # itt vmi köbös változatot ir gamma-val
+
     def sir_model(self,t,xyz,beta=0.5,gamma=0.12):
         if len(xyz) != 3:
             raise DimensionError("Dimension error: The length of xyz must be 3.")
@@ -74,7 +99,7 @@ class ExampleDifferentialEquations:
         #S: fogékony, I: fertőzött, R: felépült
         #beta: transmission rate, gamma: recovery rate
         x,y,z = xyz
-        dxdt = - beta * x * y
-        dydt = beta * x * y - gamma * y
+        dxdt = - beta * x * y / 100
+        dydt = beta * x * y /100- gamma * y
         dzdt = gamma * y
         return [dxdt,dydt,dzdt]

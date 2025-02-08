@@ -1,7 +1,3 @@
-import numpy as np
-import pandas as pd
-from tabulate import tabulate
-
 from solve_methods import *
 from differential_equations import *
 from pysindy_methods import *

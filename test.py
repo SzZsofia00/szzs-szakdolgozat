@@ -5,7 +5,7 @@ import pandas as pd
 parameters = {
     "diff_eq": None,
     "init": None,
-    "time": [0,5],
+    "time": [0,15],
     "step_size": 0.00001,
     "methodSy": None,
     "methodNM": None,
@@ -59,5 +59,5 @@ for result in results:
     print(result)
 
 df = pd.DataFrame(results)
-df.to_csv("results.csv", index=False)
+df.to_csv("results2.csv", index=False)
 print("Results saved to results.csv")
