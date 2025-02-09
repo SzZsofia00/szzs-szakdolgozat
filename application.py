@@ -24,7 +24,7 @@ class Application:
         self.so = SolveODE(self.params["diff_eq"], self.params["time"], self.params["init"], self.params["step_size"])
         self.mtx = self.so.get_matrix_with_noise(self.params["methodSy"], be_noise=self.params["be_noise"])
         self.t = self.so.create_time_points()
-        self.pm = PysindyFunctions(self.mtx, self.t, threshold=self.params["threshold"])
+        self.pm = PysindyFunctions(self.mtx, self.t,degree=self.params["degree"],threshold=self.params["threshold"])
 
     ## Model function
 
@@ -205,7 +205,7 @@ class Application:
         sindy_coeff, nm_coeff = self.reshape_coeff_matrix(model)
 
         sq_dev = (sindy_coeff.reshape(1, -1)[0] - nm_coeff.reshape(1, -1)[0]) ** 2
-        length = self.length_of_longer_fv(model)
+        length = self.length_of_longer_fv(model) #ebben nem vagyok most teljesen biztos
         summa = 0
         for i in sq_dev:
             summa += i
