@@ -17,34 +17,17 @@ parameters = {
     "threshold": 0.02
 }
 
-# Melyik függvények amikben van vmi ami nem nagyon okés:
-#   - applicationben nem tetszik a num_method_coefficients se
+# Application:
+#   - num_method_coefficients
+#   - ha az elozo valtozik valszeg num_method_solution is
+#   - create_header-for_Df
+#   - squared deviation
 
 
 apl = Application(parameters)
 model = apl.fit_sindy_model()
-# apl.create_table_of_solutions(model)
-# print(apl.squared_deviation(model))
-
-lst,fv,coeff = apl.num_method_coefficients(model)
-x = symbols('x')
-# print("lst")
-print(lst)
-print(type(lst))
-print(lst[0])
-print(type(lst[0]))
-# print("\n")
-
-features = sorted({term for term in lst[0].atoms(Pow) if term.has(x)}, key=lambda t: t.as_base_exp()[1])
-print(features)
-
-
-# print("fv")
-# print(fv)
-# print("\n")
-# print("coeff")
-# print(coeff)
-# print("\n")
+apl.create_table_of_solutions(model)
+print(apl.squared_deviation(model))
 
 ### Runtime check ###
 #start = timeit.default_timer()
