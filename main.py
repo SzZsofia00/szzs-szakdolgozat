@@ -6,12 +6,12 @@ from differential_equations import *
 import timeit
 
 parameters = {
-    "diff_eq": ExampleDifferentialEquations().lorenz,
+    "diff_eq": ExampleDifferentialEquations().chua_circuit,
     "init": [1,1,1],
     "time": [0,10],
     "step_size": 0.00001,
-    "methodSy": "midpoint_euler",
-    "methodNM": "midpoint_euler",
+    "methodSy": "euler",
+    "methodNM": "euler",
     "be_noise": False,
     "degree": 3,
     "threshold": 0.02

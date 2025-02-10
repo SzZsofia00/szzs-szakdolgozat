@@ -1,15 +1,17 @@
 from differential_equations import *
 from application import *
 import pandas as pd
+import timeit
 
 parameters = {
     "diff_eq": None,
     "init": None,
-    "time": [0,15],
+    "time": [0,5],
     "step_size": 0.00001,
     "methodSy": None,
     "methodNM": None,
     "be_noise": False,
+    "degree": 3,
     "threshold": 0.02
 }
 
@@ -19,7 +21,14 @@ equations = {
     "linear2d": ExampleDifferentialEquations().linear2d,
     "lotka_volterra": ExampleDifferentialEquations().linear2d,
     "linear3d": ExampleDifferentialEquations().linear3d,
-    "lorenz": ExampleDifferentialEquations().lorenz
+    "lorenz": ExampleDifferentialEquations().lorenz,
+    "rossler": ExampleDifferentialEquations().rossler
+    # "chua_circuit": ExampleDifferentialEquations().chua_circuit
+}
+
+chaotic_eq = {
+    "lorenz": ExampleDifferentialEquations().lorenz,
+    "rossler": ExampleDifferentialEquations().rossler
 }
 
 methodsS = ["euler","midpoint_euler","RK3","RK4"]
@@ -31,6 +40,8 @@ num = 0
 for eq_name,eq_func in equations.items():
     for mS in methodsS:
         for mNM in methodsNM:
+            start = timeit.default_timer()
+
             parameters["diff_eq"] = eq_func
             parameters["methodSy"] = mS
             parameters["methodNM"] = mNM
@@ -38,11 +49,11 @@ for eq_name,eq_func in equations.items():
                 parameters["init"] = [1]
             if eq_name == "linear2d" or eq_name == "lotka_volterra":
                 parameters["init"] = [1,1]
-            elif eq_name == "linear3d" or eq_name == "lorenz":
+            elif eq_name == "linear3d" or eq_name == "lorenz" or eq_name == "rossler" or eq_name == "chua_circuit":
                 parameters["init"] = [1, 1, 1]
 
             apl = Application(parameters)
-            model = apl.sindy_model()
+            model = apl.fit_sindy_model()
             sq_dev = apl.squared_deviation(model)
 
             results.append({
@@ -55,9 +66,12 @@ for eq_name,eq_func in equations.items():
             num = num +1
             print(num)
 
-for result in results:
-    print(result)
+            stop = timeit.default_timer()
+            print('Time: ', stop - start)
+
+# for result in results:
+#     print(result)
 
 df = pd.DataFrame(results)
-df.to_csv("results2.csv", index=False)
+df.to_csv("result_0-5.csv", index=False)
 print("Results saved to results.csv")
