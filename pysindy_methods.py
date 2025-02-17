@@ -33,10 +33,6 @@ class PysindyFunctions:
         """
         Fit the model
         """
-
-        print("Any infs in self.matrix:", np.isinf(self.matrix).any())  # Check for infs
-        print("Any NaNs in self.matrix:", np.isnan(self.matrix).any())  # Check for NaNs
-
         model = self.create_model()
         model.fit(self.matrix,t=self.t)
         return model

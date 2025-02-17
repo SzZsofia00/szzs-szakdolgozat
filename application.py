@@ -1,3 +1,4 @@
+import itertools
 import pandas as pd
 from tabulate import tabulate
 from sympy. polys. orderings import monomial_key
@@ -60,15 +61,26 @@ class Application:
 
     ## Additional function
 
+    def get_multiplication_length(self,term):
+        if isinstance(term, sp.Mul):
+            return sum(self.get_multiplication_length(arg) for arg in term.args)
+        elif isinstance(term, sp.Pow):
+            return term.exp if term.base.is_Symbol else 1
+        elif term.is_Symbol:
+            return 1
+        return 0
+
     def get_degree_of_list(self, lst:list) -> int:
         """
         Get what is the highest degree in the numerical solution.
         """
         dgr = 0
-        for expr in lst:
-            for term in expr.as_ordered_terms():
-                for var, exp in term.as_powers_dict().items():
-                    dgr = max(dgr, exp)
+        # for expr in lst:
+        #     for term in expr.as_ordered_terms():
+        #         for var, exp in term.as_powers_dict().items():
+        #             dgr = max(dgr, exp)
+
+        dgr = max(max(self.get_multiplication_length(term) for term in expr.as_ordered_terms()) for expr in lst)
         return dgr
 
     def create_new_coeff_mtx(self,lst,fv):
@@ -94,6 +106,17 @@ class Application:
         nm = len(self.num_method_feature_vector())
         return abs(nm - s)
 
+    def extract_symbolic_part(self,lst):
+        _set = set()
+        for i in lst:
+            for term in i.as_ordered_terms():
+                if isinstance(term,sp.Mul):
+                    symb_part = term.as_independent(*i.free_symbols, as_Add=False)[1]
+                    _set.add(symb_part)
+                elif term.is_symbol:
+                    _set.add(term)
+        return _set
+
     ## Num method function
 
     def num_method_with_symbols(self) -> list:
@@ -109,15 +132,27 @@ class Application:
     def num_method_feature_vector(self) -> list:
         """Create a feature vector depending on the numerical solution"""
         lst = self.num_method_with_symbols()
+        symb = CreateSymbols(len(self.params["init"])).create_symbols()
 
-        _set = set()
-        for i in lst:
-            _set = _set | i.free_symbols
+        # _set = self.extract_symbolic_part(lst)
+        # # for i in lst:
+        # #     for term in i.args:
+        # #         if isinstance(term,sp.Mul):
+        # #             _set.add(term)
+        # #         _set = _set | i.free_symbols
+        #
+        # # sorted_lst = sorted(list(_set),key=lambda s: s.name,reverse=True)
+        # sorted_lst = list(_set)
+        #
+        # degree = self.get_degree_of_list(lst)
+        # fv = sorted(sp.itermonomials(sorted_lst,degree), key=monomial_key('grevlex', sorted_lst))
+        dgr = self.get_degree_of_list(lst)
 
-        sorted_lst = sorted(list(_set),key=lambda s: s.name,reverse=True)
+        fv = []
+        for d in range(dgr + 1):
+            for i in itertools.combinations_with_replacement(symb,d):
+                fv.append(sp.Mul(*i))
 
-        degree = self.get_degree_of_list(lst)
-        fv = sorted(sp.itermonomials(sorted_lst,degree), key=monomial_key('grevlex', sorted_lst))
         return fv
 
     def num_method_coefficients(self) -> np.array:

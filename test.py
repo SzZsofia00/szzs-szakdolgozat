@@ -22,13 +22,14 @@ equations = {
     "lotka_volterra": ExampleDifferentialEquations().linear2d,
     "linear3d": ExampleDifferentialEquations().linear3d,
     "lorenz": ExampleDifferentialEquations().lorenz,
-    "rossler": ExampleDifferentialEquations().rossler
-    # "chua_circuit": ExampleDifferentialEquations().chua_circuit
+    "rossler": ExampleDifferentialEquations().rossler,
+    "chua_circuit": ExampleDifferentialEquations().chua_circuit
 }
 
 chaotic_eq = {
     "lorenz": ExampleDifferentialEquations().lorenz,
-    "rossler": ExampleDifferentialEquations().rossler
+    "rossler": ExampleDifferentialEquations().rossler,
+    "chua_circuit": ExampleDifferentialEquations().chua_circuit
 }
 
 methodsS = ["euler","midpoint_euler","RK3","RK4"]
@@ -73,5 +74,5 @@ for eq_name,eq_func in equations.items():
 #     print(result)
 
 df = pd.DataFrame(results)
-df.to_csv("result_0-5.csv", index=False)
+df.to_csv("res.csv", index=False)
 print("Results saved to results.csv")

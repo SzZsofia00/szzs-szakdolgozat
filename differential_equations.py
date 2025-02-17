@@ -77,15 +77,15 @@ class ExampleDifferentialEquations:
         dzdt = b + z * (x - c)
         return [dxdt, dydt, dzdt]
 
-    def chua_circuit(self,t,xyz,a=-1.4325,b=-0.7831,alpha=10,beta=15):
+    def chua_circuit(self,t,xyz,alpha=10.92,beta=14):
         if len(xyz) != 3:
             raise DimensionError("Dimension error: The length of xyz must be 3.")
 
         x,y,z = xyz
-        f = b * x + (a - b) / 2 * (abs(x + 1) - abs(x - 1))
-        dxdt = alpha * (y - x - f)
+        f = 1/16 * x**3 - 1/3 * x
+        dxdt = alpha * (y - f)
         dydt = x - y + z
-        dzdt = - beta * (y - z)
+        dzdt = - beta * y
         return [dxdt, dydt, dzdt]
 
         #nem biztos h jól írtam fel, még utána kéne olvasni h most mi a jó
