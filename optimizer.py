@@ -93,6 +93,7 @@ def plot(x, real, noisy, dgr, method):
 
     ax[1].bar(x=reg.get_features(), height=abs(reg.get_coeff(method).flatten()))
     ax[1].set_ylim(0,8)
+    # plt.savefig(f"{method.capitalize()} method with {rmse:.6f} RMSE.png")
     plt.show()
 
 ## plotting only noisy data
