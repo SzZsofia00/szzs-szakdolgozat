@@ -1,9 +1,10 @@
+from copy import deepcopy
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import root_mean_squared_error
-
 
 class Functions:
     def __init__(self,x):
@@ -21,26 +22,43 @@ class Functions:
     def complex2(self):
         return 0.5 * self.x**7 - 3 * self.x**5 + 2 * self.x**3 - self.x + 3 * np.sin(2 * self.x)
 
+    def poly(self):
+        return 3 * self.x ** 2
+
+    def linear(self):
+        return 3 * self.x + 5
+
+    def cubic(self):
+        return 3 * self.x**3 - 2 * self.x**2 + 0.5 * self.x + 5
+
 class Regression:
-    def __init__(self,x,data,dgr):
+    def __init__(self,x,data,dgr,alpha_ridge,alpha_lasso,alpha_elast):
         self.dgr = dgr
         self.data = data
         self.features = PolynomialFeatures(self.dgr)
         self.x = self.features.fit_transform(x)
+        self.alpha_ridge = alpha_ridge
+        self.alpha_lasso = alpha_lasso
+        self.alpha_elast = alpha_elast
 
     def get_features(self):
         return self.features.get_feature_names_out(input_features=["x"])
 
     def get_model(self,method):
         if method=='lls':
+            print('lls')
             model = LinearRegression()
         elif method=='ridge':
-            model = Ridge()
+            print('ridge')
+            model = Ridge(alpha=self.alpha_ridge)
         elif method=='lasso':
-            model = Lasso()
+            print('lasso')
+            model = Lasso(alpha=self.alpha_lasso)
         elif method=='elastic':
-            model = ElasticNet()
+            print('elastic')
+            model = ElasticNet(alpha=self.alpha_elast)
         model.fit(self.x, self.data)
+        print(model)
         return model
 
     def get_coeff(self,method):
@@ -67,22 +85,29 @@ class Regression:
 params = {
     "time": [-2,2],
     "number_of_points": 50,
-    "scale": 0.5,     #scale = standard deviation
-    "degree": 7,      #for features
-    "method": "lasso"   # lls / ridge / lasso / elastic
+    "scale": 2,     #scale = standard deviation
+    "degree": 5,      #for features
+    "method": "lasso",   # lls / ridge / lasso / elastic
+    "alpha_ridge": 0.5,
+    "alpha_lasso": 0.5,
+    "alpha_elastic": 0.5
 }
 
 x = np.linspace(params["time"][0],params["time"][1],params["number_of_points"]).reshape(-1,1)
-np.random.seed(523)
+np.random.seed(42)
 noise = np.random.normal(loc=0.0, scale=params["scale"], size=x.shape)
-f_true = Functions(x).complex2()
+f_true = Functions(x).cubic()
 
 def plot(x, real, noisy, dgr, method):
-    reg = Regression(x=x,data=noisy,dgr=dgr)
+    reg = Regression(x=x,data=noisy,dgr=dgr,
+                     alpha_ridge=params["alpha_ridge"],
+                     alpha_lasso=params["alpha_lasso"],
+                     alpha_elast=params["alpha_elastic"])
     reg_method = getattr(reg, method)()
     rmse = root_mean_squared_error(real,reg_method)
 
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+    # fig, ax = plt.subplots(1, 2)
     ax[0].set_title(f"{method.capitalize()} method with {rmse:.6f} RMSE")
     ax[1].set_title("Beta norms")
 
@@ -105,3 +130,43 @@ f_outlier = f_true + noise
 f_outlier[10] = f_outlier[10] + 20
 f_outlier[40] = f_outlier[40] - 25
 plot(x, f_true, f_outlier, params["degree"], params["method"])
+
+## plotting data (no noisy) but outlier
+f_norm = deepcopy(f_true)
+f_norm[10] = f_norm[10] + 20
+plot(x, f_true, f_norm, params["degree"], params["method"])
+
+##minden egyben
+
+def plot_all_in_one():
+    f = deepcopy(f_true) + noise
+    f[10] += 20
+    dgr = 5
+    # x_new = np.linspace(-2.5,2.5,50).reshape(-1,1)
+
+    reg = Regression(x=x, data=f, dgr=dgr,
+                     alpha_ridge=params["alpha_ridge"],
+                     alpha_lasso=params["alpha_lasso"],
+                     alpha_elast=params["alpha_elastic"])
+    lls = getattr(reg, 'lls')()
+    ridge = getattr(reg, 'ridge')()
+    lasso = getattr(reg, 'lasso')()
+    elastic = getattr(reg, 'elastic')()
+
+    # lls = LinearRegression().fit(x,f).predict(x)
+    # ridge = Ridge(alpha=0.5).fit(x,f).predict(x)
+    # lasso = Lasso(alpha=0.5).fit(x,f).predict(x)
+    # elastic = ElasticNet(alpha=0.5).fit(x,f).predict(x)
+
+    plt.figure(figsize=(10,6))
+    plt.scatter(x,f,label='Noisy data', color='grey')
+    plt.plot(x, f_true, label='True function', linestyle='dashed', color='black')
+    plt.plot(x,lls,"r-", label="LLS")
+    plt.plot(x, ridge, "b-", label="Ridge")
+    plt.plot(x, lasso, "g-", label="Lasso")
+    plt.plot(x, elastic, "m-", label="Elastic Net")
+
+    plt.legend()
+    plt.show()
+
+plot_all_in_one()
