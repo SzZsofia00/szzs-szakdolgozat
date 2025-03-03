@@ -57,7 +57,7 @@ class Regression:
         elif method=='elastic':
             print('elastic')
             model = ElasticNet(alpha=self.alpha_elast)
-        model.fit(self.x, self.data)
+        model.fit(self.x, self.data) #(data,target)
         print(model)
         return model
 
@@ -116,7 +116,11 @@ def plot(x, real, noisy, dgr, method):
     ax[0].plot(x,reg_method,label=method,color='blue')
     ax[0].legend()
 
-    ax[1].bar(x=reg.get_features(), height=abs(reg.get_coeff(method).flatten()))
+    bars = ax[1].bar(x=reg.get_features(), height=abs(reg.get_coeff(method).flatten()))
+    for bar in bars:
+        height = bar.get_height()  # Get bar height
+        ax[1].text(bar.get_x() + bar.get_width() / 2, height,
+                 f'{height:.1f}', ha='center', va='bottom', fontsize=12, fontweight='bold')
     ax[1].set_ylim(0,8)
     # plt.savefig(f"{method.capitalize()} method with {rmse:.6f} RMSE.png")
     plt.show()
@@ -137,7 +141,6 @@ f_norm[10] = f_norm[10] + 20
 plot(x, f_true, f_norm, params["degree"], params["method"])
 
 ##minden egyben
-
 def plot_all_in_one():
     f = deepcopy(f_true) + noise
     f[10] += 20
@@ -153,11 +156,6 @@ def plot_all_in_one():
     lasso = getattr(reg, 'lasso')()
     elastic = getattr(reg, 'elastic')()
 
-    # lls = LinearRegression().fit(x,f).predict(x)
-    # ridge = Ridge(alpha=0.5).fit(x,f).predict(x)
-    # lasso = Lasso(alpha=0.5).fit(x,f).predict(x)
-    # elastic = ElasticNet(alpha=0.5).fit(x,f).predict(x)
-
     plt.figure(figsize=(10,6))
     plt.scatter(x,f,label='Noisy data', color='grey')
     plt.plot(x, f_true, label='True function', linestyle='dashed', color='black')
@@ -168,5 +166,4 @@ def plot_all_in_one():
 
     plt.legend()
     plt.show()
-
 plot_all_in_one()

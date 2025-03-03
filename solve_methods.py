@@ -101,9 +101,9 @@ class SolveODE:
         :return: np.array
         """
         if be_noise:
-            noise = np.random.normal(loc=0.0, scale=scale, size=self.number_of_samples)
+            noise = np.random.normal(loc=0.0, scale=scale, size=[len(self.init),self.number_of_samples])
         else:
-            noise = np.zeros(self.number_of_samples)
+            noise = np.zeros([len(self.init),self.number_of_samples])
         return noise
 
     def get_matrix_with_noise(self,numerical_method:str='RK45',
