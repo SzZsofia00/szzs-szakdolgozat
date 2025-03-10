@@ -58,7 +58,6 @@ class Regression:
             print('elastic')
             model = ElasticNet(alpha=self.alpha_elast)
         model.fit(self.x, self.data) #(data,target)
-        print(model)
         return model
 
     def get_coeff(self,method):
@@ -98,7 +97,7 @@ np.random.seed(42)
 noise = np.random.normal(loc=0.0, scale=params["scale"], size=x.shape)
 f_true = Functions(x).cubic()
 
-def plot(x, real, noisy, dgr, method):
+def plot(x, real, noisy, dgr, method,type):
     reg = Regression(x=x,data=noisy,dgr=dgr,
                      alpha_ridge=params["alpha_ridge"],
                      alpha_lasso=params["alpha_lasso"],
@@ -122,23 +121,23 @@ def plot(x, real, noisy, dgr, method):
         ax[1].text(bar.get_x() + bar.get_width() / 2, height,
                  f'{height:.1f}', ha='center', va='bottom', fontsize=12, fontweight='bold')
     ax[1].set_ylim(0,8)
-    # plt.savefig(f"{method.capitalize()} method with {rmse:.6f} RMSE.png")
+    # plt.savefig(f"Poly with {type} with {method.capitalize()} method with scale = {params['scale']} and dgr = {params['degree']}.png")
     plt.show()
 
-## plotting only noisy data
-f_noisy = f_true + noise
-plot(x, f_true, f_noisy, params["degree"], params["method"])
+# # plotting only noisy data
+# f_noisy = f_true + noise
+# plot(x, f_true, f_noisy, params["degree"], params["method"],"noise")
 
-## plotting noisy data with outliers
-f_outlier = f_true + noise
-f_outlier[10] = f_outlier[10] + 20
-f_outlier[40] = f_outlier[40] - 25
-plot(x, f_true, f_outlier, params["degree"], params["method"])
+# ## plotting noisy data with outliers
+# f_outlier = f_true + noise
+# f_outlier[0] = f_outlier[0] + 20
+# # f_outlier[40] = f_outlier[40] - 25
+# plot(x, f_true, f_outlier, params["degree"], params["method"],"outlier")
 
 ## plotting data (no noisy) but outlier
 f_norm = deepcopy(f_true)
-f_norm[10] = f_norm[10] + 20
-plot(x, f_true, f_norm, params["degree"], params["method"])
+f_norm[0] = f_norm[0] + 3
+plot(x, f_true, f_norm, params["degree"], params["method"], "no noise")
 
 ##minden egyben
 def plot_all_in_one():
@@ -166,4 +165,4 @@ def plot_all_in_one():
 
     plt.legend()
     plt.show()
-plot_all_in_one()
+# plot_all_in_one()

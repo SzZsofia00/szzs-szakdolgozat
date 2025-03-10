@@ -1,53 +1,53 @@
-#generate data with lorenz
-# give the data for the optimizer
-
-# i need to make two plot
-# one where i plot the true function and the predicted one by x, y and z axis
-# another plot: 3d plot and beta
-
-from copy import deepcopy
-import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.metrics import root_mean_squared_error
-
-import itertools
+import matplotlib.pyplot as plt
 
 from differential_equations import *
 from solve_methods import *
 from symbol_creation import *
 
-init = [1,1,1]
-time = [0,40]
-step_size = 1
-lorenz = ExampleDifferentialEquations().lorenz
 np.random.seed(42)
 
-so = SolveODE(lorenz,time,init,step_size)
+#initialize lorenz
+init = [1,1,1]
+time_fit = [0,40] #training data [0,30] and testing data [0,40]
+step_size = 1
+lorenz = ExampleDifferentialEquations().lorenz
+
+# generate data for lorenz
+so = SolveODE(lorenz,time_fit,init,step_size)
 t = so.create_time_points().reshape(-1,1)
-data = so.generate_data()
-noise = so.generate_noise(scale=0.1)
+data = so.generate_data() #shape: (3,31) --> ([x,y,z],time_fit)
 
-#most megvannak az adatpontok
-f_noisy = data + noise
-
+#features
 features = PolynomialFeatures(3)
-f = features.fit_transform(f_noisy.T)
+data_feat = features.fit_transform(data.T) #shape: (31,20) --> ([time_fit],features)
 features.get_feature_names_out(input_features=["x","y","z"])
 
-models = []
-for i in range(len(f_noisy)):
-    model = LinearRegression().fit(f,data[i,:].reshape(-1,1))
-    models.append(model)
+x_train,x_test,y_train,y_test = train_test_split(data_feat,data.T,test_size=0.25)
+# reg = LinearRegression()
+reg = Lasso(alpha=2)
+reg.fit(x_train,y_train)
+y_pred = reg.predict(x_test)
+# y_pred = reg.predict(data_feat)
 
-pred_model = []
-for i in models:
-    pred = i.predict(f)
-    pred_model.append(pred)
+print(y_pred)
 
-print(pred_model)
 
-plt.scatter(t,data[0],label='Data',color='grey')
-plt.plot(t,pred_model[0],label='LLS',color='blue')
+fig, axes = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
+labels = ["x", "y", "z"]
+colors = ["r", "g", "b"]
+length = len(y_pred)
+
+for i in range(3):
+    axes[i].plot(t[-length:], data[i,-length:], color=colors[i], label=f"True {labels[i]}")
+    axes[i].plot(t[-length:], y_pred[:, i], color=colors[i], linestyle="dashed", label=f"Predicted {labels[i]}")
+    axes[i].set_ylabel(labels[i])
+    axes[i].legend()
+    axes[i].grid()
+
+axes[-1].set_xlabel("Time")
 plt.show()
+
+
