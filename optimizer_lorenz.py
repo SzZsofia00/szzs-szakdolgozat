@@ -26,11 +26,12 @@ data_feat = features.fit_transform(data.T) #shape: (31,20) --> ([time_fit],featu
 features.get_feature_names_out(input_features=["x","y","z"])
 
 x_train,x_test,y_train,y_test = train_test_split(data_feat,data.T,test_size=0.25)
+alpha = 0.5
 
 reg = LinearRegression()
-# reg = Ridge(alpha=2)
-# reg = Lasso(alpha=2)
-# reg = ElasticNet(alpha=2)
+# reg = Ridge(alpha=alpha)
+# reg = Lasso(alpha=alpha)
+# reg = ElasticNet(alpha=alpha)
 
 reg.fit(x_train,y_train)
 y_pred = reg.predict(x_test)
