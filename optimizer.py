@@ -32,14 +32,14 @@ class Functions:
         return 3 * self.x**3 - 2 * self.x**2 + 0.5 * self.x + 5
 
 class Regression:
-    def __init__(self,x,data,dgr,alpha_ridge,alpha_lasso,alpha_elast):
+    def __init__(self,x,data,dgr):
         self.dgr = dgr
         self.data = data
         self.features = PolynomialFeatures(self.dgr)
         self.x = self.features.fit_transform(x)
-        self.alpha_ridge = alpha_ridge
-        self.alpha_lasso = alpha_lasso
-        self.alpha_elast = alpha_elast
+        self.alpha_ridge = params["alpha_ridge"]
+        self.alpha_lasso = params["alpha_lasso"]
+        self.alpha_elast = params["alpha_elastic"]
 
     def get_features(self):
         return self.features.get_feature_names_out(input_features=["x"])
@@ -80,39 +80,44 @@ class Regression:
         elastic_model = self.get_model('elastic')
         return elastic_model.predict(self.x)
 
-
+np.random.seed(42)
 params = {
     "time": [-2,2],
-    "number_of_points": 50,
+    "data_points": 5,
+    "func_points": 100,
     "scale": 2,     #scale = standard deviation
     "degree": 5,      #for features
-    "method": "lasso",   # lls / ridge / lasso / elastic
+    "method": "lls",   # lls / ridge / lasso / elastic
     "alpha_ridge": 0.5,
     "alpha_lasso": 0.5,
     "alpha_elastic": 0.5
 }
 
-x = np.linspace(params["time"][0],params["time"][1],params["number_of_points"]).reshape(-1,1)
-np.random.seed(42)
-noise = np.random.normal(loc=0.0, scale=params["scale"], size=x.shape)
-f_true = Functions(x).cubic()
+x = np.linspace(params["time"][0],params["time"][1],params["func_points"]).reshape(-1,1)
+x_data = np.linspace(params["time"][0],params["time"][1],params["data_points"]).reshape(-1,1)
 
-def plot(x, real, noisy, dgr, method,type):
-    reg = Regression(x=x,data=noisy,dgr=dgr,
-                     alpha_ridge=params["alpha_ridge"],
-                     alpha_lasso=params["alpha_lasso"],
-                     alpha_elast=params["alpha_elastic"])
+noise = np.random.normal(loc=0.0, scale=params["scale"], size=x.shape)
+noise_data = np.random.normal(loc=0.0, scale=params["scale"], size=x_data.shape)
+
+f_true = Functions(x).cubic()
+f_data = Functions(x_data).cubic()
+
+def calculate_regression(x,noisy,method):
+    reg = Regression(x=x, data=noisy, dgr=params["degree"])
     reg_method = getattr(reg, method)()
-    rmse = root_mean_squared_error(real,reg_method)
+    return reg,reg_method
+
+def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
+    reg,reg_method = calculate_regression(x_full,noisy_full,method)
+    rmse = root_mean_squared_error(f_full,reg_method)
 
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
-    # fig, ax = plt.subplots(1, 2)
     ax[0].set_title(f"{method.capitalize()} method with {rmse:.6f} RMSE")
     ax[1].set_title("Beta norms")
 
-    ax[0].plot(x, real, label='True function', linestyle='dashed', color='gray')  # f_true
-    ax[0].scatter(x, noisy, label='Noisy data', color='red')                      # f_noisy
-    ax[0].plot(x,reg_method,label=method,color='blue')
+    ax[0].plot(x_full, f_full, label='True function', linestyle='dashed', color='gray')  # f_true
+    ax[0].scatter(x_data, noisy_data, label='Noisy data', color='red')                      # f_noisy
+    ax[0].plot(x_full,reg_method,label=method,color='blue')
     ax[0].legend()
 
     bars = ax[1].bar(x=reg.get_features(), height=abs(reg.get_coeff(method).flatten()))
@@ -124,20 +129,24 @@ def plot(x, real, noisy, dgr, method,type):
     # plt.savefig(f"Poly with {type} with {method.capitalize()} method with scale = {params['scale']} and dgr = {params['degree']}.png")
     plt.show()
 
-# # plotting only noisy data
-# f_noisy = f_true + noise
-# plot(x, f_true, f_noisy, params["degree"], params["method"],"noise")
+# plotting only noisy data
+f_noisy = f_true + noise
+f_noisy_data = f_data + noise_data
+plot(x,x_data,f_true,f_noisy,f_noisy_data,params["method"])
 
-# ## plotting noisy data with outliers
-# f_outlier = f_true + noise
-# f_outlier[0] = f_outlier[0] + 20
-# # f_outlier[40] = f_outlier[40] - 25
-# plot(x, f_true, f_outlier, params["degree"], params["method"],"outlier")
+## plotting noisy data with outliers
+f_outlier = f_true + noise
+f_outlier[0] += 20
+f_outlier_data = f_data + noise_data
+f_outlier_data[0] += 20
+plot(x,x_data,f_true,f_outlier,f_outlier_data,params["method"])
 
 ## plotting data (no noisy) but outlier
 f_norm = deepcopy(f_true)
-f_norm[0] = f_norm[0] + 3
-plot(x, f_true, f_norm, params["degree"], params["method"], "no noise")
+f_norm[0] += 20
+f_norm_data = deepcopy(f_data)
+f_norm_data[0] += 20
+plot(x,x_data,f_true,f_norm,f_norm_data,params["method"])
 
 ##minden egyben
 def plot_all_in_one():
