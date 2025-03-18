@@ -31,7 +31,7 @@ class NumericalMethods:
     k1 = np.array(self.func(self.tn,self.xn))
     k2 = np.array(self.func(self.tn + self.h/2,self.xn + self.h/2 * k1))
     # return self.xn + self.h * k2
-    return k2
+    return (k1/2 + k2/2)
 
   def RK3(self):
     """

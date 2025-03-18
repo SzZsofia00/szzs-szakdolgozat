@@ -10,17 +10,8 @@ class Functions:
     def __init__(self,x):
         self.x = x
 
-    # def polynomial_dgr4(self):
-    #     return 0.4 * self.x**4 + 0.8 * self.x**3 - 2 * self.x
-
-    def polynomial(self):
-        return 0.5 * self.x**7 - 3 * self.x**5 + 4 * self.x**3 - 0.2 * self.x
-
     def complex(self):
         return 0.5 * self.x**7 - 3 * self.x**5 + 2 * self.x**3 - self.x + 2 * np.sin(7 * self.x)
-
-    def complex2(self):
-        return 0.5 * self.x**7 - 3 * self.x**5 + 2 * self.x**3 - self.x + 3 * np.sin(2 * self.x)
 
     def poly(self):
         return 3 * self.x ** 2
@@ -30,6 +21,9 @@ class Functions:
 
     def cubic(self):
         return 3 * self.x**3 - 2 * self.x**2 + 0.5 * self.x + 5
+
+    def linear2(self):
+        return 2/3 * self.x + 10/3
 
 class Regression:
     def __init__(self,x,data,dgr):
@@ -46,23 +40,25 @@ class Regression:
 
     def get_model(self,method):
         if method=='lls':
-            print('lls')
-            model = LinearRegression()
+            # model = LinearRegression()
+            model = LinearRegression(fit_intercept=False)
         elif method=='ridge':
-            print('ridge')
-            model = Ridge(alpha=self.alpha_ridge)
+            model = Ridge(alpha=self.alpha_ridge,fit_intercept=False)
         elif method=='lasso':
-            print('lasso')
-            model = Lasso(alpha=self.alpha_lasso)
+            model = Lasso(alpha=self.alpha_lasso,fit_intercept=False)
         elif method=='elastic':
-            print('elastic')
-            model = ElasticNet(alpha=self.alpha_elast)
+            model = ElasticNet(alpha=self.alpha_elast,fit_intercept=False)
         model.fit(self.x, self.data) #(data,target)
         return model
 
     def get_coeff(self,method):
+        if method=='ridge_formula':
+            return np.linalg.pinv(self.x.T @ self.x + self.alpha_ridge * np.identity(self.x.shape[1])) @ self.x.T @ self.data
         model = self.get_model(method)
-        return model.coef_
+        c = model.coef_.flatten()
+        # c[0] = model.intercept_[0]
+        # c[0] = model.intercept_
+        return c
 
     def lls(self):
         lls_model = self.get_model('lls')
@@ -71,6 +67,9 @@ class Regression:
     def ridge(self):
         ridge_model = self.get_model('ridge')
         return ridge_model.predict(self.x)
+
+    def ridge_formula(self):
+        return self.x @ np.linalg.pinv(self.x.T @ self.x + self.alpha_ridge * np.identity(self.x.shape[1])) @ self.x.T @ self.data
 
     def lasso(self):
         lasso_model = self.get_model('lasso')
@@ -85,9 +84,9 @@ params = {
     "time": [-2,2],
     "data_points": 5,
     "func_points": 100,
-    "scale": 2,     #scale = standard deviation
-    "degree": 5,      #for features
-    "method": "lls",   # lls / ridge / lasso / elastic
+    "scale": 5,     #scale = standard deviation
+    "degree": 3,      #for features
+    "method": "lasso",   # lls / ridge / ridge_formula / lasso / elastic
     "alpha_ridge": 0.5,
     "alpha_lasso": 0.5,
     "alpha_elastic": 0.5
@@ -99,8 +98,8 @@ x_data = np.linspace(params["time"][0],params["time"][1],params["data_points"]).
 noise = np.random.normal(loc=0.0, scale=params["scale"], size=x.shape)
 noise_data = np.random.normal(loc=0.0, scale=params["scale"], size=x_data.shape)
 
-f_true = Functions(x).cubic()
-f_data = Functions(x_data).cubic()
+f_true = Functions(x).linear()
+f_data = Functions(x_data).linear()
 
 def calculate_regression(x,noisy,method):
     reg = Regression(x=x, data=noisy, dgr=params["degree"])
@@ -109,11 +108,28 @@ def calculate_regression(x,noisy,method):
 
 def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
     reg,reg_method = calculate_regression(x_full,noisy_full,method)
+
+    x_plot = np.linspace(1, 7, 100).reshape(-1, 1)  # Smooth range for plotting
+
+    y_lls = reg.get_model("lls").predict(reg.features.transform(x_plot))
+    y_ridge = reg.get_model("ridge").predict(reg.features.transform(x_plot))
+    y_lasso = reg.get_model("lasso").predict(reg.features.transform(x_plot))
+
+    # plt.scatter(x_full, noisy_full, color="red", label="Data (with Outliers)")
+    plt.plot(x_plot, y_lls, label="LLS (should overfit)", linestyle="dashed")
+    plt.plot(x_plot, y_ridge, label="Ridge (should smooth)")
+    plt.plot(x_plot, y_lasso, label="Lasso (should shrink coefficients)")
+
+    plt.legend()
+    plt.show()
+
     rmse = root_mean_squared_error(f_full,reg_method)
+    norm1 = np.linalg.norm(reg.get_coeff(method).flatten(),ord=1)
+    norm2 = np.linalg.norm(reg.get_coeff(method).flatten())
 
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
     ax[0].set_title(f"{method.capitalize()} method with {rmse:.6f} RMSE")
-    ax[1].set_title("Beta norms")
+    ax[1].set_title(f"Beta norms\n2-norm: {round(norm2,8)} | 1-norm: {round(norm1,8)}")
 
     ax[0].plot(x_full, f_full, label='True function', linestyle='dashed', color='gray')  # f_true
     ax[0].scatter(x_data, noisy_data, label='Noisy data', color='red')                      # f_noisy
@@ -125,40 +141,40 @@ def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
         height = bar.get_height()  # Get bar height
         ax[1].text(bar.get_x() + bar.get_width() / 2, height,
                  f'{height:.1f}', ha='center', va='bottom', fontsize=12, fontweight='bold')
-    ax[1].set_ylim(0,8)
+    upper_bound = max(7,max(abs(reg.get_coeff(method).flatten())))
+    ax[1].set_ylim(0,upper_bound+1)
     # plt.savefig(f"Poly with {type} with {method.capitalize()} method with scale = {params['scale']} and dgr = {params['degree']}.png")
     plt.show()
 
-# plotting only noisy data
-f_noisy = f_true + noise
-f_noisy_data = f_data + noise_data
-plot(x,x_data,f_true,f_noisy,f_noisy_data,params["method"])
+def plot_with_noise():
+    f_noisy = f_true + noise
+    f_noisy_data = f_data + noise_data
+    plot(x,x_data,f_true,f_noisy,f_noisy_data,params["method"])
 
-## plotting noisy data with outliers
-f_outlier = f_true + noise
-f_outlier[0] += 20
-f_outlier_data = f_data + noise_data
-f_outlier_data[0] += 20
-plot(x,x_data,f_true,f_outlier,f_outlier_data,params["method"])
+def plot_with_noise_and_outlier(point=0,value=20):
+    f_outlier = f_true + noise
+    f_outlier[point] += value
+    f_outlier_data = f_data + noise_data
+    f_outlier_data[point] += value
+    plot(x, x_data, f_true, f_outlier, f_outlier_data, params["method"])
 
-## plotting data (no noisy) but outlier
-f_norm = deepcopy(f_true)
-f_norm[0] += 20
-f_norm_data = deepcopy(f_data)
-f_norm_data[0] += 20
-plot(x,x_data,f_true,f_norm,f_norm_data,params["method"])
+def plot_with_outlier(point=0,value=20):
+    f_norm = deepcopy(f_true)
+    f_norm[point] += value
+    f_norm_data = deepcopy(f_data)
+    f_norm_data[point] += value
+    plot(x,x_data,f_true,f_norm,f_norm_data,params["method"])
+
+# plot_with_noise()
+# plot_with_noise_and_outlier()
+plot_with_outlier()
 
 ##minden egyben
 def plot_all_in_one():
     f = deepcopy(f_true) + noise
     f[10] += 20
-    dgr = 5
-    # x_new = np.linspace(-2.5,2.5,50).reshape(-1,1)
 
-    reg = Regression(x=x, data=f, dgr=dgr,
-                     alpha_ridge=params["alpha_ridge"],
-                     alpha_lasso=params["alpha_lasso"],
-                     alpha_elast=params["alpha_elastic"])
+    reg = Regression(x=x, data=f, dgr=params['degree'])
     lls = getattr(reg, 'lls')()
     ridge = getattr(reg, 'ridge')()
     lasso = getattr(reg, 'lasso')()

@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from matplotlib.lines import lineStyles
 
 from solve_methods import *
 import numpy as np
@@ -76,7 +75,7 @@ def plot_euler():
     plt.savefig("euler.pdf")
     # plt.show()
 
-plot_euler()
+# plot_euler()
 
 #-------------------------#
 
@@ -110,4 +109,4 @@ def plot_midpoint():
     plt.legend()
     plt.show()
 
-# plot_midpoint()
+plot_midpoint()
