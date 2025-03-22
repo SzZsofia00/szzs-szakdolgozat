@@ -6,7 +6,7 @@ class PysindyFunctions:
     def __init__(self,matrix:np.array, t:np.array, order:int=2, degree:int=3, threshold:float=0.2):
         """
         Collection of pysindy function that going to be useful.
-        :param np.array matrix: Matrix with the data values (calculated be SolveODE class)
+        :param np.array matrix: Matrix with the data values (calculated by SolveODE class)
         :param np.array t: Time points (get from SolveODE class)
         :param int order: optional. The order of the finite difference method.
         :param int degree: optional. The degree of the polynomials in the feature library.
@@ -19,7 +19,7 @@ class PysindyFunctions:
         self.optimizer = ps.STLSQ(threshold=threshold)
         self.cr = CreateSymbols(len(matrix))
 
-    def create_model(self):
+    def create_model(self) -> ps.SINDy:
         """
         Create a model for the equation.
         """
@@ -29,7 +29,7 @@ class PysindyFunctions:
                          feature_names=self.cr.create_variables())
         return model
 
-    def model_fit(self):
+    def model_fit(self) -> ps.SINDy:
         """
         Fit the model
         """
@@ -37,50 +37,54 @@ class PysindyFunctions:
         model.fit(self.matrix,t=self.t)
         return model
 
-    def get_model_equations(self,model,number_of_decimals:int=3):
+    def get_model_equations(self,model,number_of_decimals:int=3) -> list:
         """
-        Get the right hand side of the SINDy model equations for each feature.
+        Get the right hand side of the SINDy model equations.
         :param model: The model we already fitted
         :param int number_of_decimals: The number of decimals in the equation.
+        :return list
         """
         return model.equations(number_of_decimals)
 
-    def print_model_equations(self,model):
+    def print_model_equations(self,model) -> None:
         """
         Print the model's equation we fitted on the data.
         :param model: The model we already fitted
         """
         return model.print()
 
-    def get_feature_names(self,model):
+    def get_feature_names(self,model) -> list:
         """
-        Get a list of names of features used in the model.
+        Get a list of names of the features used in the model.
         :param model: The model we already fitted
+        :return list
         """
         return model.get_feature_names()
 
-    def get_coefficients(self,model):
+    def get_coefficients(self,model) -> np.ndarray:
         """
         Get the coefficients learned by the model.
         :param model: The model we already fitted
+        :return np.ndarray
         """
         return model.coefficients()
 
-    def process_feature(self,feature):
+    def process_feature(self,feature) -> str:
         """
         In the features changing the symbols so that simpy can understand the notation.
+        :return str
         """
         feature = feature.replace('^', '**')
         feature = feature.replace(' ', '*')
         return feature
 
-    def simpify_feature(self,model):
+    def simpify_feature(self,model) -> list:
         """
         Generate feature vector with symbols.
         :param model: The model we already fitted
+        :return list
         """
         dc = self.cr.create_dict()
         fn = self.get_feature_names(model)
         fv = [sp.sympify(self.process_feature(feature),locals=dc) for feature in fn]
         return fv
-

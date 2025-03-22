@@ -2,6 +2,10 @@ import sympy as sp
 
 class CreateSymbols:
     def __init__(self,dimension:int):
+        """
+        Create variables and sympy symbols.
+        :param dimension: How many variables we want to create. Can only handle maximum 3.
+        """
         self.dimension = dimension
 
     def create_variables(self) -> list:
@@ -29,7 +33,6 @@ class CreateSymbols:
     def create_xyz_symb(self) -> list:
         """
         Create an array of symbols depending on the dimension.
-        :return: np.array
         """
         symb = []
         if self.dimension == 1:

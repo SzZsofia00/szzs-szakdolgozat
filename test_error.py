@@ -1,7 +1,8 @@
 from differential_equations import *
 from application import *
 import pandas as pd
-import timeit
+
+## Run test for every ODE and calculate the squared deviation for every possible combinations of the num methods. ##
 
 parameters = {
     "diff_eq": None,
@@ -41,7 +42,6 @@ num = 0
 for eq_name,eq_func in equations.items():
     for mS in methodsS:
         for mNM in methodsNM:
-            start = timeit.default_timer()
 
             parameters["diff_eq"] = eq_func
             parameters["methodSy"] = mS
@@ -63,15 +63,6 @@ for eq_name,eq_func in equations.items():
                 "Method NM": mNM,
                 "Squared deviation": sq_dev
             })
-
-            num = num +1
-            print(num)
-
-            stop = timeit.default_timer()
-            print('Time: ', stop - start)
-
-# for result in results:
-#     print(result)
 
 df = pd.DataFrame(results)
 df.to_csv("res.csv", index=False)

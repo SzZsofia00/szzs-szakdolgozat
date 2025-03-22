@@ -1,7 +1,7 @@
 import itertools
+
 import pandas as pd
 from tabulate import tabulate
-from sympy. polys. orderings import monomial_key
 
 from pysindy_methods import *
 from solve_methods import *
@@ -9,7 +9,7 @@ from solve_methods import *
 class Application:
     def __init__(self,params:dict):
         """
-        Main class for running tests, creating features, dataframes of the solutions.
+        Main class for running tests, creating features and dataframes of the ode solutions.
         :param dict params: A dictionary of parameters:
         - diff_eq: The differential equation we observe
         - init: list of the initial values
@@ -18,8 +18,8 @@ class Application:
         - methodSy: string, the numerical method for the SINDy model
         - methodNM: string, the numerical method for the numerical solution
         - be_noise: bool, False if no noise, True otherwise
-        - degree: degree of the feature vector in the SINDy model
-        - threshold: threshold for the optimizer in the SINDy model
+        - degree: int, degree of the feature vector in the SINDy model
+        - threshold: float, threshold for the optimizer in the SINDy model
         """
         self.params = params
         self.so = SolveODE(self.params["diff_eq"], self.params["time"], self.params["init"], self.params["step_size"])
@@ -29,28 +29,28 @@ class Application:
 
     ## Model function
 
-    def fit_sindy_model(self):
+    def fit_sindy_model(self) -> ps.SINDy:
         """
         The fitted model
         """
         model = self.pm.model_fit()
         return model
 
-    def model_feature_vector(self,model) -> list:
+    def model_feature_vector(self,model:ps.SINDy) -> list:
         """
         Feature vector of the SINDy model.
         """
         fv = self.pm.simpify_feature(model)
         return fv
 
-    def model_coefficients(self,model) -> np.array:
+    def model_coefficients(self,model:ps.SINDy) -> np.ndarray:
         """
         The coefficients in the SINDy model.
         """
         coef = self.pm.get_coefficients(model)
         return coef
 
-    def model_solution(self,model) -> np.array:
+    def model_solution(self,model:ps.SINDy) -> np.ndarray:
         """
         The product of SINDy feature vector and coefficient matrix.
         """
@@ -61,7 +61,11 @@ class Application:
 
     ## Additional function
 
-    def get_multiplication_length(self,term):
+    def get_multiplication_length(self,term) -> int:
+        """
+        Giving back how many factors does the term consists of.
+        :param term: A symbolic expression
+        """
         if isinstance(term, sp.Mul):
             return sum(self.get_multiplication_length(arg) for arg in term.args)
         elif isinstance(term, sp.Pow):
@@ -72,18 +76,15 @@ class Application:
 
     def get_degree_of_list(self, lst:list) -> int:
         """
-        Get what is the highest degree in the numerical solution.
+        Get what is the highest degree in a list.
         """
-        dgr = 0
-        # for expr in lst:
-        #     for term in expr.as_ordered_terms():
-        #         for var, exp in term.as_powers_dict().items():
-        #             dgr = max(dgr, exp)
-
         dgr = max(max(self.get_multiplication_length(term) for term in expr.as_ordered_terms()) for expr in lst)
         return dgr
 
-    def create_new_coeff_mtx(self,lst,fv):
+    def create_new_coeff_mtx(self,lst:list,fv:list) -> np.ndarray:
+        """
+        Create a coefficient matrix from a list and feature vector.
+        """
         new = []
         for l in lst:
             dct = l.as_coefficients_dict()
@@ -95,27 +96,22 @@ class Application:
         coeff = np.array(new)
         return coeff
 
-    def length_of_longer_fv(self, model):
+    def length_of_longer_fv(self, model:ps.SINDy) -> int:
+        """
+        Gives back the length of the longer feature vector between the model's and the one solved simbolically.
+        """
         s = self.model_feature_vector(model)
         nm = self.num_method_feature_vector()
 
         return max(len(s),len(nm))
 
-    def how_many_extra_feature(self,model):
+    def how_many_extra_feature(self,model:ps.SINDy) -> int:
+        """
+        Gives back the absolute difference of the length of the SINDY's feature vector and symbolically solved one.
+        """
         s = len(self.model_feature_vector(model))
         nm = len(self.num_method_feature_vector())
         return abs(nm - s)
-
-    def extract_symbolic_part(self,lst):
-        _set = set()
-        for i in lst:
-            for term in i.as_ordered_terms():
-                if isinstance(term,sp.Mul):
-                    symb_part = term.as_independent(*i.free_symbols, as_Add=False)[1]
-                    _set.add(symb_part)
-                elif term.is_symbol:
-                    _set.add(term)
-        return _set
 
     ## Num method function
 
@@ -134,18 +130,6 @@ class Application:
         lst = self.num_method_with_symbols()
         symb = CreateSymbols(len(self.params["init"])).create_symbols()
 
-        # _set = self.extract_symbolic_part(lst)
-        # # for i in lst:
-        # #     for term in i.args:
-        # #         if isinstance(term,sp.Mul):
-        # #             _set.add(term)
-        # #         _set = _set | i.free_symbols
-        #
-        # # sorted_lst = sorted(list(_set),key=lambda s: s.name,reverse=True)
-        # sorted_lst = list(_set)
-        #
-        # degree = self.get_degree_of_list(lst)
-        # fv = sorted(sp.itermonomials(sorted_lst,degree), key=monomial_key('grevlex', sorted_lst))
         dgr = self.get_degree_of_list(lst)
 
         fv = []
@@ -155,7 +139,7 @@ class Application:
 
         return fv
 
-    def num_method_coefficients(self) -> np.array:
+    def num_method_coefficients(self) -> np.ndarray:
         """
         Get the coefficient matrix for the numerical solution.
         """
@@ -164,7 +148,7 @@ class Application:
         coeff = self.create_new_coeff_mtx(lst,fv)
         return coeff
 
-    def num_method_solution(self) -> np.array:
+    def num_method_solution(self) -> np.ndarray:
         """
         The product of the numerical solution's feature vector and coefficient matrix.
         """
@@ -177,6 +161,7 @@ class Application:
     def create_index_for_df(self,method:str) -> list:
         """
         Create the index for the dataframe.
+        :param str method: sindy or nm (for numerical method)
         """
         var = [" dx", " dy", " dz"]
         indx = []
@@ -184,9 +169,10 @@ class Application:
           indx.append(f"{method}{var[i]}")
         return indx
 
-    def create_header_for_df(self,model) -> list:
+    def create_header_for_df(self,model:ps.SINDy) -> list:
         """
         Create the header for the dataframe.
+        :param model: The fitted SINDy model
         """
         nm_dgr = self.get_degree_of_list(self.num_method_with_symbols())
         s_dgr = self.get_degree_of_list(self.model_feature_vector(model))
@@ -198,7 +184,7 @@ class Application:
         header = [str(expr) for expr in fv]
         return header
 
-    def create_dataframe(self,model,coeff,method:str) -> pd.DataFrame:
+    def create_dataframe(self,model:ps.SINDy,coeff:np.ndarray,method:str) -> pd.DataFrame:
         """
         Create a pandas dataframe from the given data
         :param model: The fitted SINDy model
@@ -211,7 +197,11 @@ class Application:
         df = pd.DataFrame(coeff,index=indx,columns=header)
         return df
 
-    def reshape_coeff_matrix(self,model):
+    def reshape_coeff_matrix(self,model:ps.SINDy):
+        """
+        Reshape coefficients matrices so they have the same shape
+        :param model: The fitted SINDy model
+        """
         sindy_coeff = self.model_coefficients(model)
         nm_coeff = self.num_method_coefficients()
         length = self.length_of_longer_fv(model)
@@ -225,7 +215,7 @@ class Application:
 
         return sindy_coeff,nm_coeff
 
-    def create_table_of_solutions(self, model) -> None:
+    def create_table_of_solutions(self, model:ps.SINDy) -> None:
         sindy_coeff, nm_coeff = self.reshape_coeff_matrix(model)
 
         df_sindy = self.create_dataframe(model, sindy_coeff, "sindy")
@@ -233,14 +223,14 @@ class Application:
         df = pd.concat([df_sindy, df_nm])
         print(tabulate(df, headers=self.create_header_for_df(model)))
 
-    def squared_deviation(self,model) -> float:
+    def squared_deviation(self,model:ps.SINDy) -> float:
         """
         Calculate the squared deviation between the two methods
         """
         sindy_coeff, nm_coeff = self.reshape_coeff_matrix(model)
 
         sq_dev = (sindy_coeff.reshape(1, -1)[0] - nm_coeff.reshape(1, -1)[0]) ** 2
-        length = self.length_of_longer_fv(model) #ebben nem vagyok most teljesen biztos
+        length = self.length_of_longer_fv(model)
         summa = 0
         for i in sq_dev:
             summa += i
