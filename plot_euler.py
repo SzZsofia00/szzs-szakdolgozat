@@ -42,12 +42,12 @@ line1 = slope1 * (t1_tangent - t1) + y1
 
 def plot_euler():
     plt.rcParams["mathtext.fontset"] = "cm"
-    plt.rcParams["font.size"] = 15.5
+    plt.rcParams["font.size"] = 20
     # plt.rcParams["mathtext.default"] = 18
 
     plt.figure(figsize=(10,6))
     plt.plot(t_exact,sol,color='black',linestyle='-',label="$x(t)=3t^3-11t^2+10t+1$")
-    plt.plot(t_nm, euler, color='#C32148',marker='o', linestyle='-', label="Euler módszer")
+    plt.plot(t_nm, euler, color='#C32148',marker='o', linestyle='-', label=r"$\text{Euler módszer}$")
 
     plt.plot(t_tangent,line,color='#00468C',linestyle='--')
     # plt.scatter([t0],[y0],color='black')
@@ -57,19 +57,20 @@ def plot_euler():
     # plt.scatter([t1], [y1], color='#00468C')
     plt.vlines(t1 + h, ymin=-0.5, ymax=5.5, linestyle="--", color="#00468C")
 
-    plt.xticks(t_nm,["$x_0$","$x_0+h$","","$x_0+3h$","","","","","","","","","$x_0+Nh$"])
+    # plt.xticks(t_nm,["$x_0$","$x_0+h$","","$x_0+3h$","","","","","","","","","$x_0+Nh$"])
+    plt.xticks(t_nm, ["$x_0$","", "$x_0+2h$", "", "", "", "", "", "", "", "", "", "$x_0+Nh$"])
     plt.yticks([])
 
-    plt.text(-0.19,0.95,"$P$",fontsize=16,color="black")
-    plt.text(0.1, y1, "$P'$", fontsize=16, color="black")
-    plt.text(0.5, 5.2, "$P''$", fontsize=16, color="black")
+    plt.text(-0.15,0.95,r"$\text{P}$",fontsize=16,color="black")
+    plt.text(0.1, y1, r"$\text{P'}$", fontsize=16, color="black")
+    plt.text(0.5, 5.3, r"$\text{P''}$", fontsize=16, color="black")
 
     plt.ylim(-0.5)
     plt.xlim(-0.5)
     plt.xlabel("$t$",fontsize=16)
     plt.ylabel("$x$",fontsize=16)
     plt.legend()
-    # plt.savefig("euler.pdf")
+    # plt.savefig("euler_text.pdf")
     plt.show()
 
 plot_euler()

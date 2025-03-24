@@ -1,4 +1,5 @@
 import sympy as sp
+import numpy as np
 
 class CreateSymbols:
     def __init__(self,dimension:int):
@@ -54,3 +55,8 @@ class CreateSymbols:
         var = self.create_variables()
         symb = self.create_xyz_symb()
         return dict(zip(var,symb))
+
+    def create_symbold_for_dde(self,prev):
+        symb = [[sp.symbols(f'{chr(120 + i)}_{j}') for j in range(prev)] for i in range(self.dimension)]
+        turned = np.fliplr(symb)
+        return turned.flatten()
