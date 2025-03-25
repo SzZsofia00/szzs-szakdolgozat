@@ -6,7 +6,7 @@ import numpy as np
 from symbol_creation import *
 
 
-def mackey_glass(t,x,mu=1,p=2,n=2):
+def mackey_glass(x,t,mu=1,p=2,n=2):
     return -mu * x(t) + (p * x(t-1)) / (1 + (x(t-1))**n)
 
 def history(t):
@@ -38,8 +38,11 @@ h = 1/2
 num_of_samples = int((ts[-1] - ts[0]) / h) + 1
 time = np.linspace(ts[0],ts[-1],num_of_samples)
 
-zero_mtx = np.zeros((1,num_of_samples))
-zero_mtx[0] = x_current
+zero_mtx = np.zeros(num_of_samples)
+zero_mtx[0] = x_delayed
+zero_mtx[1] = x_current
+
+print(zero_mtx)
 
 # for i in range(time - 1)
 #     matrix[i+1] = AB2(mackey_glass,)
