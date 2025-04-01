@@ -23,11 +23,11 @@ ts = np.linspace(1,num_of_points,num_of_points)
 ys = ddeint.ddeint(mackey_glass,history,ts).flatten()
 data = np.vstack([ys[-num_of_points+1:], ys[:num_of_points-1]])
 
-print(ts)
-
 symb = CreateSymbols(1).create_symbold_for_dde(2)
 var = CreateSymbols(1).create_var_for_dde(2)
 dgr = 2
+
+print(var)
 
 fv = []
 for d in range(dgr + 1):
