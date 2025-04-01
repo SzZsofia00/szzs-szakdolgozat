@@ -106,11 +106,11 @@ class Regression:
 
 params = {
     "time": [-2,2],
-    "data_points": 5,
+    "data_points": 10,
     "func_points": 100,
     "scale": 3,     #scale = standard deviation
     "degree": 3,      #for features
-    "method": "lls",   # lls / ridge / lasso / elastic
+    "method": "lasso",   # lls / ridge / lasso / elastic
     "alpha_ridge": 0.5,
     "alpha_lasso": 0.2,
     "alpha_elastic": 0.2
@@ -122,8 +122,8 @@ x_data = np.linspace(params["time"][0],params["time"][1],params["data_points"]).
 noise = np.random.normal(loc=0.0, scale=params["scale"], size=x.shape)
 noise_data = np.random.normal(loc=0.0, scale=params["scale"], size=x_data.shape)
 
-f_true = Functions(x).cubic()
-f_data = Functions(x_data).cubic()
+f_true = Functions(x).linear()
+f_data = Functions(x_data).linear()
 
 def calculate_regression(x,noisy,method):
     reg = Regression(x=x, data=noisy, dgr=params["degree"])
@@ -131,6 +131,9 @@ def calculate_regression(x,noisy,method):
     return reg,reg_method
 
 def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
+    plt.rcParams["mathtext.fontset"] = "cm"
+    plt.rcParams["font.size"] = 15
+
     reg,reg_method = calculate_regression(x_full,noisy_full,method)
 
     rmse = root_mean_squared_error(f_full,reg_method)
@@ -140,7 +143,7 @@ def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
     ax[0].set_title(f"{method.capitalize()} method with {rmse:.6f} RMSE")
     # ax[1].set_title(f"Beta norms\n2-norm: {round(norm2,3)} | 1-norm: {round(norm1,3)}")
-    ax[1].set_title(r"$\beta$ coefficients")
+    ax[1].set_title(r"Coefficients of $\beta$")
 
     ax[0].plot(x_full, f_full, label='True function', linestyle='dashed', color='gray')  # f_true
     ax[0].scatter(x_data, noisy_data, label='Noisy data', color='red')                      # f_noisy
@@ -155,8 +158,8 @@ def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
                  f'{height:.1f}', ha='center', va='bottom', fontsize=12, fontweight='bold')
     upper_bound = max(7,max(abs(reg.get_coeff(method).flatten())))
     ax[1].set_ylim(0,upper_bound+1)
+    ax[1].legend([beta_label], handlelength=0, handletextpad=0, fontsize=20)
     plt.savefig(f"{method.capitalize()} method.pdf")
-    ax[1].legend([beta_label], handlelength=0, handletextpad=0)
     plt.show()
 
 def plot_with_noise():

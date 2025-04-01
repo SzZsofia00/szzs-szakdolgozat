@@ -56,6 +56,11 @@ class CreateSymbols:
         symb = self.create_xyz_symb()
         return dict(zip(var,symb))
 
+    def create_var_for_dde(self,prev):
+        var = [[f'{chr(120 + i)}_{j}' for j in range(prev)] for i in range(self.dimension)]
+        turned = np.fliplr(var)
+        return np.array(var).flatten()
+
     def create_symbold_for_dde(self,prev):
         symb = [[sp.symbols(f'{chr(120 + i)}_{j}') for j in range(prev)] for i in range(self.dimension)]
         turned = np.fliplr(symb)

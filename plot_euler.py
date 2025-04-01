@@ -58,7 +58,7 @@ def plot_euler():
     plt.vlines(t1 + h, ymin=-0.5, ymax=5.5, linestyle="--", color="#00468C")
 
     # plt.xticks(t_nm,["$x_0$","$x_0+h$","","$x_0+3h$","","","","","","","","","$x_0+Nh$"])
-    plt.xticks(t_nm, ["$x_0$","", "$x_0+2h$", "", "", "", "", "", "", "", "", "", "$x_0+Nh$"])
+    plt.xticks(t_nm, ["$t_0$","", "$t_0+2h$", "", "", "", "", "", "", "", "", "", "$t_0+Nh$"])
     plt.yticks([])
 
     plt.text(-0.15,0.95,r"$\text{P}$",fontsize=16,color="black")
@@ -67,10 +67,10 @@ def plot_euler():
 
     plt.ylim(-0.5)
     plt.xlim(-0.5)
-    plt.xlabel("$t$",fontsize=16)
-    plt.ylabel("$x$",fontsize=16)
+    # plt.xlabel("$t$",fontsize=20)
+    plt.ylabel("$x$",fontsize=20)
     plt.legend()
-    # plt.savefig("euler_text.pdf")
+    plt.savefig("euler.pdf")
     plt.show()
 
 plot_euler()
