@@ -141,7 +141,7 @@ def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
     norm2 = np.linalg.norm(reg.get_coeff(method).flatten())
 
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
-    ax[0].set_title(f"{method.capitalize()} method with {rmse:.6f} RMSE")
+    ax[0].set_title(f"{method.upper()} method with {rmse:.6f} RMSE")
     # ax[1].set_title(f"Beta norms\n2-norm: {round(norm2,3)} | 1-norm: {round(norm1,3)}")
     ax[1].set_title(r"Coefficients of $\beta$")
 
@@ -159,7 +159,7 @@ def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
     upper_bound = max(7,max(abs(reg.get_coeff(method).flatten())))
     ax[1].set_ylim(0,upper_bound+1)
     ax[1].legend([beta_label], handlelength=0, handletextpad=0, fontsize=20)
-    plt.savefig(f"{method.capitalize()} method.pdf")
+    # plt.savefig(f"{method.capitalize()} method.pdf")
     plt.show()
 
 def plot_with_noise():
