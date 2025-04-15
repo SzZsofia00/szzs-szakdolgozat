@@ -1,44 +1,51 @@
 import ddeint
-import itertools
 import pysindy as ps
-
 import numpy as np
-from derivative import FiniteDifference
-from mpmath import degree
-from pysindy import PolynomialLibrary, STLSQ
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import Lasso, LinearRegression
 
-from symbol_creation import *
-
-
-def mackey_glass(x,t,mu=1,p=2,n=2):
-    return -mu * x(t) + (p * x(t-1)) / (1 + (x(t-1))**n)
+def mackey_glass(x,t,tau,mu=1,p=2,n=2):
+    return -mu * x(t) + (p * x(t-tau)) / (1 + (x(t-tau))**n)
 
 def history(t):
     return 0.5
 
-num_of_points = 10
+num_of_points = 50
+dgr = 3
+order = 2
 
-ts = np.linspace(1,num_of_points,num_of_points)
-ys = ddeint.ddeint(mackey_glass,history,ts).flatten()
-data = np.vstack([ys[-num_of_points+1:], ys[:num_of_points-1]])
+S = np.arange(1, 30)
+info = []
 
-symb = CreateSymbols(1).create_symbold_for_dde(2)
-var = CreateSymbols(1).create_var_for_dde(2)
-dgr = 2
+for s in S:
+    print(s)
+    def mackey_with_tau(x, t):
+        return mackey_glass(x, t, tau=s)
 
-print(var)
+    ts = np.linspace(0,s+num_of_points-1,s+num_of_points)
+    ys = ddeint.ddeint(mackey_with_tau,history,ts).flatten() # generált adat
 
-fv = []
-for d in range(dgr + 1):
-    for i in itertools.combinations_with_replacement(symb,d):
-        fv.append(sp.Mul(*i))
+    X = np.vstack([ys[-num_of_points+s:], ys[:num_of_points-s]]).T # X
 
-print(data.T)
+    feature_library = ps.PolynomialLibrary(degree=dgr)
+    feature_library.fit(X)
+    theta = feature_library.transform(X)
 
-model = ps.SINDy(differentiation_method=ps.FiniteDifference(order=2),
-                 feature_library=ps.PolynomialLibrary(degree=dgr),
-                 optimizer=ps.STLSQ(threshold=0.02),
-                 feature_names=var)
-model.fit(data.T,1)
-model.print()
+    differentiation_method = ps.FiniteDifference(order=order)
+    print(X.shape)
+    print(ts.shape)
+    print(ts[s+1:].shape)
+    X_dot = differentiation_method._differentiate(X,ts[s+1:])
+
+    lasso = Lasso(alpha=0.2,fit_intercept=False)
+    lasso.fit(theta,X_dot)
+
+    Xi = np.array(lasso.coef_).T
+    print(Xi)
+
+    celfuggveny = np.linalg.norm(X_dot - theta @ Xi)
+    print(celfuggveny)
+
+    info.append([s, Xi, celfuggveny])
+
+print(info)
+
