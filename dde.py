@@ -4,34 +4,6 @@ import numpy as np
 from sklearn.linear_model import Lasso, LinearRegression, Ridge
 import matplotlib.pyplot as plt
 
-def stlsq(theta,X_dot,lmbda=0.01,max_iter=20):
-
-    B = []
-    lls = LinearRegression(fit_intercept=False)
-
-    for _ in range(max_iter):
-        print(theta.shape)
-        tmp_length = len(B)
-
-        lls.fit(theta,X_dot)
-        Xi = np.array(lls.coef_)
-
-        for i in range(len(Xi)):
-            print(Xi)
-            if abs(Xi[i]) < lmbda:
-                B.append(i)
-                theta = np.delete(theta,i,axis=1)
-                print(theta.shape)
-                break
-
-
-        # először lls-el meghatározom az Xi-ket
-        # ami kisebb mint lambda azt 0nak veszem
-        # elraktározom az indexet
-        # ujabb iteráció
-        # theta-t módosítom úgy hogy eltávolítom azt az elemet ami megfelel a korábbi indexnek
-    return 0
-
 def dde_optimizer(theta,X_dot):
     Q = []
 
