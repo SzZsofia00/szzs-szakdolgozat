@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 from differential_equations import *
-from solve_methods import *
+from solve_differential_equation import *
 from pysindy_methods import *
 
 # Differential equation

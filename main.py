@@ -12,13 +12,13 @@ parameters = {
     "methodNM": "euler",
     "be_noise": False,
     "degree": 3,
-    "threshold": 0.02
+    "threshold": 0.02,
+    "optimizer": "stlsq"
 }
 
-apl = Application(parameters)
-model = apl.fit_sindy_model()
-apl.create_table_of_solutions(model)
-print(apl.squared_deviation(model))
+apl = DataframeForCoefficients(parameters)
+apl.create_table_of_solutions(parameters["optimizer"])
+print(apl.squared_deviation(parameters["optimizer"]))
 
 ### Runtime check ###
 #start = timeit.default_timer()

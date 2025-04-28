@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from solve_methods import *
+from solve_differential_equation import *
 import numpy as np
 
 def diff_eq(t,x):
