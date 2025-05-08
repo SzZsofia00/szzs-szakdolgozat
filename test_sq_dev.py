@@ -38,14 +38,22 @@ chaotic_eq = {
 
 methodsS = ["euler","midpoint_euler","RK3","RK4"] #method optimizer
 methodsNM = ["euler","midpoint_euler","RK3","RK4"]
-optimizer = ["lls","ridge","lasso","stlsq"] #gsls-t kinyirja a alacsony h
+# optimizer = ["lls","ridge","lasso","stlsq"] #gsls-t kinyirja a alacsony h
+optimizer = ["lasso"]
 
 results = []
 num = 0
 
+start0 = timeit.default_timer()
+
 for eq_name,eq_func in equations.items():
     for mS in methodsS:
         for mNM in methodsNM:
+
+            # eq_name = "linear2d"
+            # eq_func = ExampleDifferentialEquations().linear2d
+            # mS = "RK4"
+            # mNM = "euler"
 
             start = timeit.default_timer()
 
@@ -66,6 +74,7 @@ for eq_name,eq_func in equations.items():
             }
 
             for op in optimizer:
+                # op = "lls"
                 print(eq_name,mS,mNM,op)
                 dffc = DataframeForCoefficients(parameters)
                 sq_dev = dffc.squared_deviation(op)
@@ -74,6 +83,7 @@ for eq_name,eq_func in equations.items():
 
                 stop = timeit.default_timer()
                 print('Time: ', stop - start)
+                # exit()
 
             results.append(row)
             print(num)
@@ -83,5 +93,5 @@ df = pd.DataFrame(results)
 df.to_csv("res.csv", index=False)
 print("Results saved to results.csv")
 
-stop = timeit.default_timer()
-print('Time: ', stop - start)
+stop0 = timeit.default_timer()
+print('Time: ', stop0 - start0)

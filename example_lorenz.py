@@ -13,7 +13,7 @@ diff_eq = lambda t, xyz: de.lorenz(t,xyz,sigma=sigma,rho=rho,beta=beta)
 
 # System
 init = [0,1,1]
-time = [0,20]
+time = [0,40]
 step_size = 0.001
 
 # generate data
@@ -21,17 +21,22 @@ so = SolveODE(diff_eq,time,init,step_size)
 num_method = 'euler'
 noise = False
 data_mtx = so.get_matrix_with_noise(numerical_method=num_method,be_noise=noise)
+t = so.create_time_points()
+
+#slice
+train_end_time = 20
+end_time_index = int(train_end_time/step_size)
+data_train = data_mtx[:, :end_time_index]
+t_train = t[:end_time_index]
 
 # pysindy model
-t = so.create_time_points()
-pf = PysindyFunctions(data_mtx, t)
+pf = PysindyFunctions(data_train, t_train)
 model = pf.model_fit()
 pf.print_model_equations(model)
 
 # simulate
-# init_test = [8,7,15]
-init_test = data_mtx[:, -1].tolist()
-time_test = [20,40]
+init_test = data_train[:, -1].tolist()
+time_test = [train_end_time,40]
 so_test = SolveODE(diff_eq,time_test,init_test,step_size)
 data_test = so_test.get_matrix_with_noise(numerical_method=num_method,be_noise=noise)
 t_test = so_test.create_time_points()
@@ -80,6 +85,6 @@ def plot_true_and_sim():
     # plt.savefig('high-rho-lorenz-xyz.pdf')
     fig.show()
 
-plot_lorenz_3d(data_mtx,data_test_sim)
-plot_lorenz_3d_true_sim(data_mtx,data_test_sim)
+plot_lorenz_3d(data_train,data_test_sim)
+plot_lorenz_3d_true_sim(data_train,data_test_sim)
 plot_true_and_sim()

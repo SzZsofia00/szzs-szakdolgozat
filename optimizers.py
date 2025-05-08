@@ -4,12 +4,16 @@ from sklearn.linear_model import LinearRegression,Ridge, Lasso
 from solve_differential_equation import *
 from pysindy_methods import *
 
+import timeit
+
 class Optimizers:
-    def __init__(self,params):
+    def __init__(self,params,mtx,t):
         self.params = params
-        self.so = SolveODE(self.params["diff_eq"], self.params["time"], self.params["init"], self.params["step_size"])
-        self.mtx = self.so.get_matrix_with_noise(self.params["methodSy"], be_noise=self.params["be_noise"]).T
-        self.t = self.so.create_time_points()
+        # self.so = SolveODE(self.params["diff_eq"], self.params["time"], self.params["init"], self.params["step_size"])
+        # self.mtx = self.so.get_matrix_with_noise(self.params["methodSy"], be_noise=self.params["be_noise"]).T
+        # self.t = self.so.create_time_points()
+        self.mtx = mtx
+        self.t = t
 
     def differentiation(self):
         diff_method = ps.FiniteDifference()
@@ -56,9 +60,11 @@ class Optimizers:
 
         lls = LinearRegression(fit_intercept=False)
 
-        ridge = Ridge(alpha=ridge_alpha, fit_intercept=False) # linear2d-re picit jobb 0.1 0.01-el
+        ridge = Ridge(alpha=ridge_alpha, fit_intercept=False)
         ridge.fit(theta, X_dot)
-        Xi = np.array(ridge.coef_).T
+        Xi = np.array(ridge.coef_)
+
+        C = np.linalg.norm(X_dot - theta @ Xi)
 
         while True:
             mask = [i for i in range(theta.shape[1]) if i not in Q]
@@ -77,7 +83,7 @@ class Optimizers:
                     theta_tmp = np.delete(theta_tmp, i, axis=1)
 
                     lls.fit(theta_tmp, X_dot)
-                    Xi_tmp = np.array(lls.coef_).T
+                    Xi_tmp = np.array(lls.coef_)
 
                     err = np.linalg.norm(X_dot - theta_tmp @ Xi_tmp)
                     candidate_error.append((err, idx))
@@ -90,6 +96,17 @@ class Optimizers:
                 Xi[min_index] = 0
                 Q.append(min_index)
                 continue
+
+            lls.fit(theta_msk, X_dot)
+            Xi_tmp = np.array(lls.coef_)
+            i = 0
+            for j in range(len(Xi)):
+                if j not in Q:
+                    Xi[j] = Xi_tmp[i]
+                    i = i + 1
+                else:
+                    Xi[j] = 0.
+
             break
         return Xi.T
 

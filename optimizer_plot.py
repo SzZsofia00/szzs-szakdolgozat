@@ -2,6 +2,7 @@ from copy import deepcopy
 
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.core.defchararray import capitalize
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import root_mean_squared_error
@@ -73,6 +74,9 @@ class Regression:
         Get the coefficients of the features for the given method.
         :param str method: lls, ridge, lasso or elastic
         """
+        if method == 'gsls':
+            Xi = self.gsls()[1]
+            return Xi
         model = self.get_model(method)
         return model.coef_.flatten()
 
@@ -104,13 +108,71 @@ class Regression:
         elastic_model = self.get_model('elastic')
         return elastic_model.predict(self.x)
 
+    def gsls(self, ridge_alpha=0.5):
+        theta = self.x
+        X_dot = self.data.reshape(-1,1)
+
+        Q = []
+
+        lls = LinearRegression(fit_intercept=False)
+
+        ridge = Ridge(alpha=ridge_alpha, fit_intercept=False)
+        ridge.fit(theta, X_dot)
+        Xi = np.array(ridge.coef_)
+
+        C = np.linalg.norm(X_dot - theta @ Xi)
+
+        while True:
+            mask = [i for i in range(theta.shape[1]) if i not in Q]
+
+            theta_msk = theta[:, mask]
+            Xi_msk = Xi[mask]
+
+            C = np.linalg.norm(X_dot - theta_msk @ Xi_msk)
+
+            candidate_error = []
+
+            for i, idx in enumerate(mask):  # kinda a map with i (sorszam) and corresponding index in the original Xi
+
+                if theta_msk.shape[1] > 1:
+                    theta_tmp = theta_msk.copy()
+                    theta_tmp = np.delete(theta_tmp, i, axis=1)
+
+                    lls.fit(theta_tmp, X_dot)
+                    Xi_tmp = np.array(lls.coef_).flatten()
+
+                    err = np.linalg.norm(X_dot - theta_tmp @ Xi_tmp)
+                    candidate_error.append((err, idx))
+                else:
+                    candidate_error.append((C * 2, 0))
+
+            min_error, min_index = min(candidate_error)
+
+            if min_error < C * 1.1:
+                Xi[min_index] = 0
+                Q.append(min_index)
+                continue
+
+            lls.fit(theta_msk, X_dot)
+            Xi_tmp = np.array(lls.coef_).flatten()
+            i = 0
+            for j in range(len(Xi)):
+                if j not in Q:
+                    Xi[j] = Xi_tmp[i]
+                    i = i + 1
+                else:
+                    Xi[j] = 0.
+
+            break
+        return [theta @ Xi, Xi]
+
 params = {
     "time": [-2,2],
     "data_points": 10,
     "func_points": 100,
     "scale": 3,     #scale = standard deviation
     "degree": 3,      #for features
-    "method": "lasso",   # lls / ridge / lasso / elastic
+    "method": "gsls",   # lls / ridge / lasso / elastic
     "alpha_ridge": 0.5,
     "alpha_lasso": 0.2,
     "alpha_elastic": 0.2
@@ -128,9 +190,13 @@ f_data = Functions(x_data).linear()
 def calculate_regression(x,noisy,method):
     reg = Regression(x=x, data=noisy, dgr=params["degree"])
     reg_method = getattr(reg, method)()
+
+    if method == 'gsls':
+        reg_method = reg_method[0]
+
     return reg,reg_method
 
-def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
+def plot(x_full,x_data, f_full, noisy_full,noisy_data, method,point=None):
     plt.rcParams["mathtext.fontset"] = "cm"
     plt.rcParams["font.size"] = 15
 
@@ -147,7 +213,14 @@ def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
 
     ax[0].plot(x_full, f_full, label='True function', linestyle='dashed', color='gray')  # f_true
     ax[0].scatter(x_data, noisy_data, label='Noisy data', color='red')                      # f_noisy
-    ax[0].plot(x_full,reg_method,label=method,color='blue')
+    ax[0].plot(x_full,reg_method,label=method.capitalize(),color='blue')
+
+    outlier_indices = point
+    if len(outlier_indices) > 0:
+        for i in outlier_indices:
+            ax[0].scatter(x_data[i], noisy_data[i],
+                          color='black', s=100, marker='*', label='Outlier')
+
     ax[0].legend()
 
     beta_label = fr"$||\beta||_2={round(norm2,3)} \ ||\beta||_1={round(norm1,3)}$"
@@ -159,7 +232,8 @@ def plot(x_full,x_data, f_full, noisy_full,noisy_data, method):
     upper_bound = max(7,max(abs(reg.get_coeff(method).flatten())))
     ax[1].set_ylim(0,upper_bound+1)
     ax[1].legend([beta_label], handlelength=0, handletextpad=0, fontsize=20)
-    # plt.savefig(f"{method.capitalize()} method.pdf")
+
+    # plt.savefig(f"{method}.pdf")
     plt.show()
 
 def plot_with_noise():
@@ -169,18 +243,18 @@ def plot_with_noise():
 
 def plot_with_noise_and_outlier(point=0,value=20):
     f_outlier = f_true + noise
-    f_outlier[point] += value
+    f_outlier[point] += -1
     f_outlier_data = f_data + noise_data
-    f_outlier_data[point] += value
-    plot(x, x_data, f_true, f_outlier, f_outlier_data, params["method"])
+    f_outlier_data[point] += -1
+    plot(x, x_data, f_true, f_outlier, f_outlier_data, params["method"],[point])
 
 def plot_with_outlier(point=0,value=20):
     f_norm = deepcopy(f_true)
     f_norm[point] += value
     f_norm_data = deepcopy(f_data)
     f_norm_data[point] += value
-    plot(x,x_data,f_true,f_norm,f_norm_data,params["method"])
+    plot(x,x_data,f_true,f_norm,f_norm_data,params["method"],point)
 
-plot_with_noise()
-# plot_with_noise_and_outlier()
+# plot_with_noise()
+plot_with_noise_and_outlier()
 # plot_with_outlier()

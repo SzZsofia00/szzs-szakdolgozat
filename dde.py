@@ -30,7 +30,6 @@ def dde_optimizer(theta,X_dot):
             if theta_msk.shape[1] > 1:
                 theta_tmp = theta_msk.copy()
                 theta_tmp = np.delete(theta_tmp,i,axis=1)
-
                 lls.fit(theta_tmp,X_dot)
                 Xi_tmp = np.array(lls.coef_)
 
@@ -45,6 +44,17 @@ def dde_optimizer(theta,X_dot):
             Xi[min_index] = 0
             Q.append(min_index)
             continue
+
+        ridge.fit(theta_msk, X_dot)
+        Xi_tmp = np.array(ridge.coef_)
+        i = 0
+        for j in range(len(Xi)):
+            if j not in Q:
+                Xi[j] = Xi_tmp[i]
+                i = i + 1
+            else:
+                Xi[j] = 0.
+
         break
     return Xi
 
@@ -57,6 +67,11 @@ def dde_eq(x, t, tau=7, alpha=0.75):
 def history(t): #periodic function for past
     return np.sin(t)
 
+def dde_eq_generic(x, t, tau, params):
+    xx = x(t)
+    xd = x(t - tau)
+    return np.dot(params, [1, xx, xd, xx**2, xd**2, xx**3, xd**3])
+
 
 dgr = 3
 order = 1
@@ -66,12 +81,23 @@ N = 4000
 T = h * (N-1)
 num_of_points = N
 
-s = np.linspace(1,int(8.5/h),int(8.5/h)) #just the index for the running tau
+# s = np.linspace(1,int(8.5/h),int(8.5/h))
+s = np.linspace(int(3/h),int(8.5/h),int(5.5/h)) #just the index for the running tau
 # tau_s = s * h
 
 #minta data.. ehhez hasonlitották az adatukat
 ts = np.linspace(0,T,N)
-ys = ddeint.ddeint(dde_eq, history, ts).flatten() # generált adat
+data = ddeint.ddeint(dde_eq, history, ts).flatten() # generált adat
+
+#noise
+# noise = np.random.normal(loc=0.0, scale=0.5, size=data.shape) #scale = standard deviation
+noise = np.zeros(data.shape)
+ys = data + noise
+# ys = ys + 0.011  * np.random.randn(*ys.shape)
+
+plt.plot(ts, ys)
+plt.plot(ts, data,color='red')
+plt.show()
 
 info = []
 Xis = []
@@ -79,7 +105,7 @@ Xis = []
 length = N - len(s)
 
 for ind in s:
-    # print(int(ind))
+    print(int(ind))
     tau = ind * h
     ind = int(ind)
 
@@ -101,30 +127,29 @@ for ind in s:
     # Xi = np.array(lasso.coef_).T #ha Xi lassoval
     Xi = dde_optimizer(theta,X_dot) #ha Xi a cikk szerinti modon
 
-
-    # celfuggveny = np.linalg.norm(X_dot - theta @ Xi)
-
-    X_dot_pred = theta @ Xi
-
-    def X_from_derivative(init, X_dot, h):
-        X_pred = np.zeros(len(X_dot))
-        X_pred[0] = init
-        for i in range(1, len(X_pred)):
-            X_pred[i] = X_pred[i - 1] + h * X_dot[i - 1]
-        return X_pred
-
-
-    init = X[0, 0]
-    X_reconstructed = X_from_derivative(init, X_dot_pred, h)
+    # visszafejtjük X-t a prediktált Xi-ből
+    X_reconstructed = ddeint.ddeint(
+        lambda x, t: dde_eq_generic(x, t, ind * h, Xi),
+        history, ts).flatten()
 
     # Calculate reconstruction error
-    Z = len(X[:, 0])
-    E = np.sum((X_reconstructed - X[:, 0]) ** 2) / Z
+    Z = np.sum(X[:, 0] ** 2)
+    # prediktált X - valós X
+    E = np.sum((X_reconstructed - ys) ** 2) / Z
 
     info.append([ind*h, E])
 
 info = np.array(info)
 
 plt.plot(info[:,0],info[:,1],marker='*',markerfacecolor='r',markersize=3,label='DDE')
+plt.show()
+
+
+# data + error
+fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+ax[0].plot(ts, ys)
+ax[0].plot(ts, data,color='red')
+ax[1].plot(info[:,0],info[:,1],marker='*',markerfacecolor='r',markersize=3,label='DDE')
+# plt.savefig("dde-data-error-noise-0.5.pdf")
 plt.show()
 
