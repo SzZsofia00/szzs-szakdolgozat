@@ -12,15 +12,19 @@ de = ExampleDifferentialEquations()
 diff_eq = lambda t, xyz: de.lorenz(t,xyz,sigma=sigma,rho=rho,beta=beta)
 
 # System
-init = [0,1,1]
+init = [1,1,1]
 time = [0,40]
 step_size = 0.001
 
 # generate data
 so = SolveODE(diff_eq,time,init,step_size)
-num_method = 'euler'
-noise = False
-data_mtx = so.get_matrix_with_noise(numerical_method=num_method,be_noise=noise)
+# num_method = 'euler'
+# num_method = 'midpoint_euler'
+num_method = 'RK3'
+# num_method = 'RK4'
+noise = True
+scale = 1.0
+data_mtx = so.get_matrix_with_noise(numerical_method=num_method,be_noise=noise,scale=scale)
 t = so.create_time_points()
 
 #slice

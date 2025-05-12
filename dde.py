@@ -1,6 +1,7 @@
 import ddeint
 import pysindy as ps
 import numpy as np
+from numpy.ma.core import argmin
 from sklearn.linear_model import Lasso, LinearRegression, Ridge
 import matplotlib.pyplot as plt
 
@@ -9,9 +10,9 @@ def dde_optimizer(theta,X_dot):
 
     lls = LinearRegression(fit_intercept=False)
 
-    ridge = Ridge(alpha=0.5,fit_intercept=False)
-    ridge.fit(theta,X_dot)
-    Xi = np.array(ridge.coef_)
+    # ridge = Ridge(alpha=0.5,fit_intercept=False)
+    lls.fit(theta,X_dot)
+    Xi = np.array(lls.coef_)
 
     C = np.linalg.norm(X_dot - theta @ Xi)
 
@@ -45,8 +46,8 @@ def dde_optimizer(theta,X_dot):
             Q.append(min_index)
             continue
 
-        ridge.fit(theta_msk, X_dot)
-        Xi_tmp = np.array(ridge.coef_)
+        lls.fit(theta_msk, X_dot)
+        Xi_tmp = np.array(lls.coef_)
         i = 0
         for j in range(len(Xi)):
             if j not in Q:
@@ -88,10 +89,11 @@ s = np.linspace(int(3/h),int(8.5/h),int(5.5/h)) #just the index for the running 
 #minta data.. ehhez hasonlitották az adatukat
 ts = np.linspace(0,T,N)
 data = ddeint.ddeint(dde_eq, history, ts).flatten() # generált adat
+print(data)
 
 #noise
-# noise = np.random.normal(loc=0.0, scale=0.5, size=data.shape) #scale = standard deviation
-noise = np.zeros(data.shape)
+noise = np.random.normal(loc=0.0, scale=0.5, size=data.shape) #scale = standard deviation
+# noise = np.zeros(data.shape)
 ys = data + noise
 # ys = ys + 0.011  * np.random.randn(*ys.shape)
 
@@ -106,6 +108,7 @@ length = N - len(s)
 
 for ind in s:
     print(int(ind))
+    ind = 219
     tau = ind * h
     ind = int(ind)
 
@@ -127,6 +130,8 @@ for ind in s:
     # Xi = np.array(lasso.coef_).T #ha Xi lassoval
     Xi = dde_optimizer(theta,X_dot) #ha Xi a cikk szerinti modon
 
+    sol = theta @ Xi
+
     # visszafejtjük X-t a prediktált Xi-ből
     X_reconstructed = ddeint.ddeint(
         lambda x, t: dde_eq_generic(x, t, ind * h, Xi),
@@ -142,6 +147,7 @@ for ind in s:
 info = np.array(info)
 
 plt.plot(info[:,0],info[:,1],marker='*',markerfacecolor='r',markersize=3,label='DDE')
+# plt.savefig("dde_plot2.pdf")
 plt.show()
 
 
@@ -150,6 +156,6 @@ fig, ax = plt.subplots(1, 2, figsize=(15, 5))
 ax[0].plot(ts, ys)
 ax[0].plot(ts, data,color='red')
 ax[1].plot(info[:,0],info[:,1],marker='*',markerfacecolor='r',markersize=3,label='DDE')
-# plt.savefig("dde-data-error-noise-0.5.pdf")
+plt.savefig("dde_noisy.pdf")
 plt.show()
 

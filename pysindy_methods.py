@@ -1,5 +1,6 @@
 import pysindy as ps
 import numpy as np
+from sklearn.linear_model import LinearRegression,Ridge, Lasso
 from symbol_creation import *
 
 class PysindyFunctions:
@@ -17,6 +18,9 @@ class PysindyFunctions:
         self.differentiation_method = ps.FiniteDifference(order=order)
         self.feature_library = ps.PolynomialLibrary(degree=degree)
         self.optimizer = ps.STLSQ(threshold=threshold)
+        # self.optimizer = LinearRegression(fit_intercept=False)
+        # self.optimizer = Ridge(fit_intercept=False,alpha=0.5)
+        # self.optimizer = Lasso(fit_intercept=False,alpha=0.2)
         self.cr = CreateSymbols(len(matrix))
 
     def create_model(self) -> ps.SINDy:

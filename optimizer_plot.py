@@ -220,6 +220,7 @@ def plot(params,t,t_full,f_noisy,f,f_true,method,point=[]):
     fig,ax = plt.subplots(1,2,figsize=(15,5))
     plot_regression(ax[0],method,rmse,t,t_full,f_noisy,f_true,reg_method, point)
     plot_coefficients(ax[1],norm1,norm2,reg,method)
+    plt.savefig(f"{method}.pdf")
     plt.show()
 
 ######################################
@@ -229,7 +230,7 @@ params = {
     'points_data': 10,
     'points_for_plot': 100,
     'scale': 1,
-    'degree': 3,
+    'degree': 5,
     'method': 'lasso',
     'alpha_ridge': 0.5,
     'alpha_lasso': 0.2,
@@ -246,13 +247,13 @@ def plot_with_noise():
 def plot_with_noise_and_outlier():
     f_noisy = f + noisy
     point = 1
-    f_noisy[point] += -10
+    f_noisy[point] += -3
     plot(params,t,t_full,f_noisy,f,f_full,params['method'],[point])
 
 def plot_with_outlier():
     f_noisy = deepcopy(f)
     point = 0
-    f_noisy[point] += -10
+    f_noisy[point] += -3
     plot(params, t, t_full, f_noisy,f, f_full, params['method'],[point])
 
 # plot_with_noise()
