@@ -17,10 +17,10 @@ class PysindyFunctions:
         self.t = t
         self.differentiation_method = ps.FiniteDifference(order=order)
         self.feature_library = ps.PolynomialLibrary(degree=degree)
-        self.optimizer = ps.STLSQ(threshold=threshold)
         # self.optimizer = LinearRegression(fit_intercept=False)
-        # self.optimizer = Ridge(fit_intercept=False,alpha=0.5)
+        # self.optimizer = Ridge(fit_intercept=False,alpha=1.5)
         # self.optimizer = Lasso(fit_intercept=False,alpha=0.2)
+        self.optimizer = ps.STLSQ(threshold=threshold)
         self.cr = CreateSymbols(len(matrix))
 
     def create_model(self) -> ps.SINDy:

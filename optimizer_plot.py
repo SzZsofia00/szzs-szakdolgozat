@@ -4,10 +4,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.core.defchararray import capitalize
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
+import pysindy as ps
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import root_mean_squared_error
 
 np.random.seed(42)
+
+params = {
+    'time': [-2,2],
+    'points_data': 10,
+    'points_for_plot': 100,
+    'scale': 1,
+    'degree': 5,
+    'method': 'elastic',
+    'alpha_ridge': 1.5,
+    'alpha_lasso': 0.4,
+    'alpha_elastic': 0.1
+}
 
 class Functions:
     def __init__(self,x):
@@ -38,6 +51,7 @@ class Regression:
         self.features = PolynomialFeatures(params['degree'])
         self.time = self.features.fit_transform(time_points) #t for the data points
         self.time_predict = self.features.fit_transform(time_predict) #t of the entire intervall, we predict here for smoother function
+        self._coeff = []
 
     def get_model(self, method: str):
         """
@@ -55,35 +69,35 @@ class Regression:
         model.fit(self.time, self.data)
         return model
 
-    def lls(self) -> np.ndarray:
+    def lls(self) -> (np.ndarray, np.ndarray):
         """
         Gives back the values for the model predicted with linear least square method.
         """
         lls_model = self.get_model('lls')
-        return lls_model.predict(self.time_predict)
+        return lls_model.predict(self.time), lls_model.predict(self.time_predict)
 
-    def ridge(self) -> np.ndarray:
+    def ridge(self) -> (np.ndarray, np.ndarray):
         """
         Gives back the values for the model predicted with Ridge regression.
         """
         ridge_model = self.get_model('ridge')
-        return ridge_model.predict(self.time_predict)
+        return ridge_model.predict(self.time), ridge_model.predict(self.time_predict)
 
-    def lasso(self) -> np.ndarray:
+    def lasso(self) -> (np.ndarray, np.ndarray):
         """
         Gives back the values for the model predicted with LASSO regression.
         """
         lasso_model = self.get_model('lasso')
-        return lasso_model.predict(self.time_predict)
+        return lasso_model.predict(self.time), lasso_model.predict(self.time_predict)
 
-    def elastic(self) -> np.ndarray:
+    def elastic(self) -> (np.ndarray, np.ndarray):
         """
         Gives back the values for the model predicted with Elastic Net method.
         """
         elastic_model = self.get_model('elastic')
-        return elastic_model.predict(self.time_predict)
+        return elastic_model.predict(self.time), elastic_model.predict(self.time_predict)
 
-    def gsls(self, ridge_alpha=0.5):
+    def gsls(self, gsls_threshold=1.4):
         theta = self.time
         X_dot = self.data.reshape(-1,1)
 
@@ -91,9 +105,8 @@ class Regression:
 
         lls = LinearRegression(fit_intercept=False)
 
-        ridge = Ridge(alpha=ridge_alpha, fit_intercept=False)
-        ridge.fit(theta, X_dot)
-        Xi = np.array(ridge.coef_)
+        lls.fit(theta, X_dot)
+        Xi = np.array(lls.coef_).T
 
         C = np.linalg.norm(X_dot - theta @ Xi)
 
@@ -123,7 +136,7 @@ class Regression:
 
             min_error, min_index = min(candidate_error)
 
-            if min_error < C * 1.1:
+            if min_error < C * gsls_threshold:
                 Xi[min_index] = 0
                 Q.append(min_index)
                 continue
@@ -139,15 +152,54 @@ class Regression:
                     Xi[j] = 0.
 
             break
-        return [theta @ Xi, Xi]
+
+        self._coeff = Xi
+        return theta @ Xi, self.time_predict @ Xi
+
+    def stlsq(self,threshold=0.3):
+        theta = self.time
+        X_dot = self.data.reshape(-1, 1)
+
+        B = []
+
+        lls = LinearRegression(fit_intercept=False)
+        lls.fit(theta,X_dot)
+        Xi = np.array(lls.coef_).T
+
+        while True:
+            mask = [i for i in range(theta.shape[1]) if i not in B]
+            theta_msk = theta[:, mask]
+
+            if theta_msk.shape[1] > 1:
+                lls.fit(theta_msk, X_dot)
+                Xi_tmp = np.array(lls.coef_).T
+
+                small_index = np.where(np.abs(Xi_tmp) < threshold)[0]
+                if len(small_index) > 0:
+                    B.extend(small_index)
+                else:
+                    break
+
+        lls.fit(theta_msk,X_dot)
+        Xi_tmp = np.array(lls.coef_).flatten()
+        i = 0
+        for j in range(len(Xi)):
+            if j not in B:
+                Xi[j] = Xi_tmp[i]
+                i = i + 1
+            else:
+                Xi[j] = 0.
+
+        self._coeff = Xi
+        return theta @ Xi, self.time_predict @ Xi
 
     def get_coeff(self,method:str) -> np.ndarray:
         """
         Get the coefficients of the features for the given method.
         :param str method: lls, ridge, lasso or elastic
         """
-        if method == 'gsls':
-            Xi = self.gsls()[1]
+        if method == 'gsls' or method == 'stlsq':
+            Xi = self._coeff
             return Xi
 
         model = self.get_model(method)
@@ -170,21 +222,15 @@ def generate_inputs(time,num_of_points, scale):
 
 def calculate_regression(parameters,time,time_full,noisy,method):
     reg = Regression(parameters=parameters,data=noisy,time_points=time,time_predict=time_full)
-    reg_method = getattr(reg,method)()
+    reg_data_predict, reg_method = getattr(reg,method)()
 
-    if method == 'gsls':
-        reg_method = reg_method[0]
-
-    return reg, reg_method
+    return reg, reg_data_predict, reg_method
 
 def plot_regression(ax, method, rmse,t,t_full,f_noisy,f_true,reg_method,point=[]):
     ax.set_title(f"{method.upper()} method with {rmse:.6f} RMSE")
     ax.plot(t_full, f_true, label='True function', linestyle='dashed', color='gray')  # f_true
     ax.scatter(t, f_noisy, label='Noisy data', color='red')                     # f_noisy
-    if method == 'gsls':
-        ax.plot(t, reg_method, label=method.capitalize(), color='blue')
-    else:
-        ax.plot(t_full, reg_method, label=method.capitalize(), color='blue')
+    ax.plot(t_full, reg_method, label=method.capitalize(), color='blue')
     outlier_indices = point
     if len(outlier_indices) > 0:
         for i in outlier_indices:
@@ -195,47 +241,42 @@ def plot_coefficients(ax,norm1,norm2,reg,method):
     ax.set_title(r"Coefficients of $\beta$")
     beta_label = fr"$||\beta||_2={round(norm2, 3)} \ ||\beta||_1={round(norm1, 3)}$"
     coeff = reg.get_coeff(method).flatten()
-    bars = ax.bar(x=reg.get_features(), height=abs(coeff), label=beta_label)
+    bars = ax.bar(x=reg.get_features(), height=(coeff), label=beta_label) #abs(coeff)
     for bar in bars:
         height = bar.get_height()  # Get bar height
-        ax.text(bar.get_x() + bar.get_width() / 2, height,
-                   f'{height:.1f}', ha='center', va='bottom', fontsize=12, fontweight='bold')
-    upper_bound = max(7, max(abs(coeff)))
-    ax.set_ylim(0, upper_bound + 1)
+        if height >= 0:
+            ax.text(bar.get_x() + bar.get_width() / 2, height,
+                       f'{height:.1f}', ha='center', va='bottom', fontsize=12, fontweight='bold')
+        else:
+            ax.text(bar.get_x() + bar.get_width() / 2, height-0.5,
+                    f'{height:.1f}', ha='center', va='bottom', fontsize=12, fontweight='bold')
+    upper_bound = max(7, max((coeff))+1) #abs(coeff)
+    lower_bound = min(coeff) - 1 if min(coeff) != 0 else 0
+    ax.set_ylim(lower_bound, upper_bound)
+    ax.axhline(y=0, color='black', linewidth=1)
     ax.legend([beta_label], handlelength=0, handletextpad=0, fontsize=20)
 
 def plot(params,t,t_full,f_noisy,f,f_true,method,point=[]):
     plt.rcParams["mathtext.fontset"] = "cm"
     plt.rcParams["font.size"] = 15
 
-    reg,reg_method = calculate_regression(params,t,t_full,f_noisy,method)
+    reg, reg_data_predict, reg_method = calculate_regression(params,t,t_full,f_noisy,method)
 
     if method == 'gsls':
-        rmse = root_mean_squared_error(f_noisy,reg_method)
+        rmse = root_mean_squared_error(f_noisy,reg_data_predict)
     else:
-        rmse = root_mean_squared_error(f_true, reg_method)
+        rmse = root_mean_squared_error(f_noisy, reg_data_predict)
     norm1 = np.linalg.norm(reg.get_coeff(method).flatten(), ord=1)
     norm2 = np.linalg.norm(reg.get_coeff(method).flatten())
 
     fig,ax = plt.subplots(1,2,figsize=(15,5))
     plot_regression(ax[0],method,rmse,t,t_full,f_noisy,f_true,reg_method, point)
     plot_coefficients(ax[1],norm1,norm2,reg,method)
-    plt.savefig(f"{method}.pdf")
+    # plt.savefig(f"{method}.pdf")
     plt.show()
 
 ######################################
 
-params = {
-    'time': [-2,2],
-    'points_data': 10,
-    'points_for_plot': 100,
-    'scale': 1,
-    'degree': 5,
-    'method': 'lasso',
-    'alpha_ridge': 0.5,
-    'alpha_lasso': 0.2,
-    'alpha_elastic': 0.2
-}
 
 t,noisy,f = generate_inputs(params['time'],params['points_data'],params['scale'])
 t_full,noisy_full,f_full = generate_inputs(params['time'],params['points_for_plot'],params['scale'])

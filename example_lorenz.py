@@ -10,21 +10,25 @@ rho = 28
 beta = 8/3
 de = ExampleDifferentialEquations()
 diff_eq = lambda t, xyz: de.lorenz(t,xyz,sigma=sigma,rho=rho,beta=beta)
+# diff_eq = lambda t, xyz: de.lotka_volterra(t,xyz)
+# diff_eq = lambda t, xyz: de.rossler(t,xyz)
 
 # System
 init = [1,1,1]
+# init = [1,1]
 time = [0,40]
 step_size = 0.001
 
 # generate data
 so = SolveODE(diff_eq,time,init,step_size)
 # num_method = 'euler'
-# num_method = 'midpoint_euler'
-num_method = 'RK3'
+num_method = 'midpoint_euler'
+# num_method = 'RK3'
 # num_method = 'RK4'
 noise = True
-scale = 1.0
+scale = 0.1
 data_mtx = so.get_matrix_with_noise(numerical_method=num_method,be_noise=noise,scale=scale)
+data_mtx_without_noise = so.get_matrix_with_noise(numerical_method=num_method,be_noise=False,scale=scale)
 t = so.create_time_points()
 
 #slice
@@ -60,6 +64,7 @@ def plot_lorenz_3d(data,sim):
     ax.set_zlabel("Z")
     # ax.set_title("Lorenz Model")
     ax.legend()
+    # plt.savefig('lorenz.pdf')
     plt.show()
 
 def plot_lorenz_3d_true_sim(data,sim):
@@ -74,21 +79,29 @@ def plot_lorenz_3d_true_sim(data,sim):
     ax[1].set_xlabel("X")
     ax[1].set_ylabel("Y")
     ax[1].set_zlabel("Z")
+    # plt.savefig('lorenz2.pdf')
     plt.show()
 
 def plot_true_and_sim():
-    fig, axs = plt.subplots(3, 1, sharex=True, figsize=(7, 9))
+    fig, axs = plt.subplots(3, 2, sharex=True, figsize=(7, 9))
+
+    end_time_index = int(train_end_time / step_size)
+    sim_end_index = int(10/step_size)
+
     for i in range(3):
-        axs[i].plot(t, data_mtx[i], "k", label="true simulation")
-        axs[i].plot(t_test, data_test_sim[i], "r", label="model simulation")
+        # axs[i].plot(t[:end_time_index], data_mtx[i,:end_time_index], "blue", label="noisy data")
+        # axs[i].plot(t_test, data_mtx_without_noise[i,end_time_index:], "k", label="true")
+        # axs[i].plot(t_test, data_test_sim[i], "r", label="model simulation")
+        axs[i].plot(t_test[:sim_end_index], data_mtx_without_noise[i, end_time_index:int(30/step_size)], "k", label="true")
+        axs[i].plot(t_test[:sim_end_index], data_test_sim[i,:sim_end_index], "r", label="model simulation")
         axs[i].legend()
 
     axs[0].set(ylabel="$x$")
     axs[1].set(ylabel="$y$")
     axs[2].set(xlabel="$t$", ylabel="$z$")
-    # plt.savefig('high-rho-lorenz-xyz.pdf')
+    plt.savefig('lorenz4.pdf')
     fig.show()
 
-plot_lorenz_3d(data_train,data_test_sim)
-plot_lorenz_3d_true_sim(data_train,data_test_sim)
+# plot_lorenz_3d(data_train,data_test_sim)
+# plot_lorenz_3d_true_sim(data_train,data_test_sim)
 plot_true_and_sim()

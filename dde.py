@@ -84,53 +84,62 @@ num_of_points = N
 
 # s = np.linspace(1,int(8.5/h),int(8.5/h))
 s = np.linspace(int(3/h),int(8.5/h),int(5.5/h)) #just the index for the running tau
+
 # tau_s = s * h
 
 #minta data.. ehhez hasonlitották az adatukat
 ts = np.linspace(0,T,N)
 data = ddeint.ddeint(dde_eq, history, ts).flatten() # generált adat
-print(data)
+
+ts_full = np.linspace(0,h*(8000-1),8000)
+data_full = ddeint.ddeint(dde_eq, history, ts_full).flatten()
+
 
 #noise
-noise = np.random.normal(loc=0.0, scale=0.5, size=data.shape) #scale = standard deviation
+np.random.seed(42)
+noise = np.random.normal(loc=0.0, scale=0.01, size=data.shape) #scale = standard deviation
 # noise = np.zeros(data.shape)
 ys = data + noise
 # ys = ys + 0.011  * np.random.randn(*ys.shape)
 
-plt.plot(ts, ys)
-plt.plot(ts, data,color='red')
-plt.show()
+def plot_original_function():
+    plt.rcParams["mathtext.fontset"] = "cm"
+    plt.rcParams["font.size"] = 12
+    plt.plot(ts, ys)
+    plt.plot(ts, data,color='red')
+    plt.xlabel("$t$")
+    plt.ylabel("$x$")
+    plt.savefig("dde_original.pdf")
+    plt.show()
+# plot_original_function()
 
 info = []
 Xis = []
 
 length = N - len(s)
 
-for ind in s:
+def find_model(ind):
     print(int(ind))
-    ind = 219
     tau = ind * h
     ind = int(ind)
 
-    X = np.vstack([ys[ind:], ys[:num_of_points-ind]]).T # X
+    X = np.vstack([ys[ind:], ys[:num_of_points - ind]]).T  # X
     X = X[0:length]
 
     feature_library = ps.PolynomialLibrary(degree=dgr)
     feature_library.fit(X)
-
     theta = feature_library.transform(X)
-    theta = theta[:,[0,1,2,3,5,6,9]]
+    theta = theta[:, [0, 1, 2, 3, 5, 6, 9]]
 
     differentiation_method = ps.FiniteDifference(order=order)
     X_dot = differentiation_method._differentiate(X[:, 0], ts[ind:ind + len(X)])
 
-    lasso = Lasso(alpha=0.01,fit_intercept=False)
-    lasso.fit(theta,X_dot)
+    Xi = dde_optimizer(theta, X_dot)  # ha Xi a cikk szerinti modon
+    return X,Xi
 
-    # Xi = np.array(lasso.coef_).T #ha Xi lassoval
-    Xi = dde_optimizer(theta,X_dot) #ha Xi a cikk szerinti modon
-
-    sol = theta @ Xi
+for ind in s:
+    # ind = 159+120
+    X,Xi = find_model(ind=ind)
 
     # visszafejtjük X-t a prediktált Xi-ből
     X_reconstructed = ddeint.ddeint(
@@ -139,23 +148,51 @@ for ind in s:
 
     # Calculate reconstruction error
     Z = np.sum(X[:, 0] ** 2)
-    # prediktált X - valós X
     E = np.sum((X_reconstructed - ys) ** 2) / Z
 
-    info.append([ind*h, E])
+    info.append([ind * h, E])
+    # break
 
 info = np.array(info)
 
-plt.plot(info[:,0],info[:,1],marker='*',markerfacecolor='r',markersize=3,label='DDE')
-# plt.savefig("dde_plot2.pdf")
+def plot_error_and_tau():
+    plt.plot(info[:,0],info[:,1],marker='*',markerfacecolor='r',markersize=3,label='DDE')
+    plt.rcParams["mathtext.fontset"] = "cm"
+    plt.rcParams["font.size"] = 16
+    plt.xlabel(r"$\tau$")
+    plt.ylabel(r"$\epsilon(\tau)$")
+    plt.savefig("dde_noise_big.pdf")
+    plt.show()
+# plot_error_and_tau()
+
+def data_and_error():
+    fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+    ax[0].plot(ts, ys)
+    ax[0].plot(ts, data, color='red')
+    ax[1].plot(info[:, 0], info[:, 1], marker='*', markerfacecolor='r', markersize=3, label='DDE')
+    plt.savefig("dde_noisy.pdf")
+    plt.show()
+
+############# SIMULATION ##################
+best_index = np.argmin(info[:,1])
+best_tau = (info[best_index, 0])
+print("Best tau:", best_tau)
+
+best_index = best_index + 120
+
+Xi = find_model(best_index)[1]
+
+simulated_data = ddeint.ddeint(
+    lambda x, t: dde_eq_generic(x, t, best_tau, Xi),
+    history, ts_full).flatten() #ts-t kicseréljük
+
+# plot simulation
+# plt.plot(ts, ys, label="Noisy data", color='black')
+plt.plot(ts_full[125*40:155*40], data_full[125*40:155*40], label="Original", color='red')
+plt.plot(ts_full[125*40:155*40], simulated_data[125*40:155*40], label="Simulated", color='blue')
+plt.legend()
+plt.xlabel("$t$")
+plt.ylabel("$x(t)$")
+# plt.title(f"Simulation using identified model (tau={best_tau:.3f})")
+plt.savefig("dde_learned_simulation3.pdf")
 plt.show()
-
-
-# data + error
-fig, ax = plt.subplots(1, 2, figsize=(15, 5))
-ax[0].plot(ts, ys)
-ax[0].plot(ts, data,color='red')
-ax[1].plot(info[:,0],info[:,1],marker='*',markerfacecolor='r',markersize=3,label='DDE')
-plt.savefig("dde_noisy.pdf")
-plt.show()
-

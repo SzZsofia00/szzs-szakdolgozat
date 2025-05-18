@@ -19,7 +19,7 @@ class ExampleDifferentialEquations:
         dxdt = 0.2 * x * (8 - x)
         return [dxdt]
 
-    def lotka_volterra(self,t,xy,alpha=2/3,beta=4/3,gamma=1,delta=1):
+    def lotka_volterra(self,t,xy,alpha=1.1,beta=0.4,gamma=0.4,delta=0.1):
         if len(xy) != 2:
             raise DimensionError("Dimension error: The length of xy must be 2.")
 
