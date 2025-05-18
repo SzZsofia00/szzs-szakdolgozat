@@ -138,7 +138,6 @@ def find_model(ind):
     return X,Xi
 
 for ind in s:
-    # ind = 159+120
     X,Xi = find_model(ind=ind)
 
     # visszafejtjük X-t a prediktált Xi-ből
@@ -151,7 +150,6 @@ for ind in s:
     E = np.sum((X_reconstructed - ys) ** 2) / Z
 
     info.append([ind * h, E])
-    # break
 
 info = np.array(info)
 
@@ -163,7 +161,7 @@ def plot_error_and_tau():
     plt.ylabel(r"$\epsilon(\tau)$")
     plt.savefig("dde_noise_big.pdf")
     plt.show()
-# plot_error_and_tau()
+plot_error_and_tau()
 
 def data_and_error():
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
@@ -174,25 +172,28 @@ def data_and_error():
     plt.show()
 
 ############# SIMULATION ##################
-best_index = np.argmin(info[:,1])
-best_tau = (info[best_index, 0])
-print("Best tau:", best_tau)
 
-best_index = best_index + 120
+def simulate(info):
+    best_index = np.argmin(info[:,1])
+    best_tau = (info[best_index, 0])
+    print("Best tau:", best_tau)
 
-Xi = find_model(best_index)[1]
+    best_index = best_index + 120
 
-simulated_data = ddeint.ddeint(
-    lambda x, t: dde_eq_generic(x, t, best_tau, Xi),
-    history, ts_full).flatten() #ts-t kicseréljük
+    Xi = find_model(best_index)[1]
 
-# plot simulation
-# plt.plot(ts, ys, label="Noisy data", color='black')
-plt.plot(ts_full[125*40:155*40], data_full[125*40:155*40], label="Original", color='red')
-plt.plot(ts_full[125*40:155*40], simulated_data[125*40:155*40], label="Simulated", color='blue')
-plt.legend()
-plt.xlabel("$t$")
-plt.ylabel("$x(t)$")
-# plt.title(f"Simulation using identified model (tau={best_tau:.3f})")
-plt.savefig("dde_learned_simulation3.pdf")
-plt.show()
+    simulated_data = ddeint.ddeint(
+        lambda x, t: dde_eq_generic(x, t, best_tau, Xi),
+        history, ts_full).flatten() #ts-t kicseréljük
+
+    # plot simulation
+    plt.plot(ts, ys, label="Noisy data", color='black')
+    plt.plot(ts_full[N:], data_full[N:], label="Original", color='red')
+    plt.plot(ts_full[N:], simulated_data[N:], label="Simulated", color='blue')
+    plt.legend()
+    plt.xlabel("$t$")
+    plt.ylabel("$x(t)$")
+    # plt.savefig("dde_learned_simulation2.pdf")
+    plt.show()
+
+# simulate(info=info)
