@@ -1,5 +1,7 @@
 Ez a projekt a Matematika BSc szakdolgozatomhoz készült, melyben differenciálegyenletek modellezésével foglalkoztam. 
 
+
+
 Használat
 
 A felhasználó számára 3 fájl van, melyekben szabadon módosíthatja a paramétereket, hogy különböző viselkedéseket figyelhessen meg. 
