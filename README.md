@@ -4,7 +4,7 @@ Ez a projekt a Matematika BSc szakdolgozatomhoz készült, melyben differenciál
 
 Használat
 
-A felhasználó számára 3 fájl van, melyekben szabadon módosíthatja a paramétereket, hogy különböző viselkedéseket figyelhessen meg. 
+A felhasználó számára három fájl van, melyekben szabadon módosíthatja a paramétereket, hogy különböző viselkedéseket figyelhessen meg. 
 Az egyik a **main.py** melyben különböző differenciálegyenletekből generált adatokhoz végez a rendszer egy modellkeresést. Ehhez egy 
 táblázat kerül kiiratásra az ouputra, ahol össze tudjuk hasonlítani az valós és a kapott rendszer egyenleteit, együtthatóit.
 Az **optimizer_plot.py** segítségével különböző optimalizáló módszerekre tudunk készíteni grafikus ábrákat az előre megadott paraméterek
