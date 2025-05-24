@@ -16,7 +16,7 @@ init = [1,1,1]
 time = [0,40]
 step_size = 0.001
 
-optimizer = 'stlsq'
+optimizer = 'ridge'
 
 # generate data
 so = SolveODE(diff_eq,time,init,step_size)
@@ -100,4 +100,4 @@ def plot_true_and_sim():
 
 # plot_lorenz_3d(data_train,data_test_sim)
 # plot_lorenz_3d_true_sim(data_train,data_test_sim)
-plot_true_and_sim()
+# plot_true_and_sim()

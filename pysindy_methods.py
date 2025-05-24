@@ -29,7 +29,7 @@ class PysindyFunctions:
         if self.opt_method == 'lls':
             optimizer = LinearRegression(fit_intercept=False)
         elif self.opt_method == 'ridge':
-            optimizer = Ridge(fit_intercept=False,alpha=1.5)
+            optimizer = ps.SINDyOptimizer(Ridge(alpha=1.5,fit_intercept=False),unbias=False)
         elif self.opt_method == 'lasso':
             optimizer = Lasso(fit_intercept=False, alpha=0.2)
         elif self.opt_method == 'stlsq':
@@ -67,7 +67,7 @@ class PysindyFunctions:
         """
         return model.equations(number_of_decimals)
 
-    def print_model_equations(self,model,precision=3) -> None:
+    def print_model_equations(self,model,precision=1) -> None:
         """
         Print the model's equation we fitted on the data.
         :param model: The model we already fitted
