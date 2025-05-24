@@ -47,7 +47,7 @@ def plot_euler():
 
     plt.figure(figsize=(10,6))
     plt.plot(t_exact,sol,color='black',linestyle='-',label="$x(t)=3t^3-11t^2+10t+1$")
-    plt.plot(t_nm, euler, color='#C32148',marker='o', linestyle='-', label=r"$\text{Euler módszer}$")
+    plt.plot(t_nm, euler, color='#C32148',marker='o', linestyle='-', label=r"$\text{Euler-módszer}$")
 
     plt.plot(t_tangent,line,color='#00468C',linestyle='--')
     # plt.scatter([t0],[y0],color='black')
