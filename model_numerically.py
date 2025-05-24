@@ -3,17 +3,13 @@ from solve_differential_equation import *
 from pysindy_methods import *
 from symbol_creation import *
 
-from differential_equations import *
 
 class NumericalModel:
     def __init__(self,params,mtx,t):
         self.params = params
-        # self.so = SolveODE(self.params["diff_eq"], self.params["time"], self.params["init"], self.params["step_size"])
-        # self.mtx = self.so.get_matrix_with_noise(self.params["methodSy"], be_noise=self.params["be_noise"]).T
-        # self.t = self.so.create_time_points()
         self.mtx = mtx
         self.t = t
-        self.pm = PysindyFunctions(self.mtx.T, self.t, degree=self.params["degree"], threshold=self.params["threshold"])
+        self.pm = PysindyFunctions(self.mtx.T, self.t, self.params["optimizer"], degree=self.params["degree"], threshold=self.params["threshold"])
 
     def differential_eq_symbolic(self) -> list:
         """

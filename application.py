@@ -18,8 +18,8 @@ class DataframeForCoefficients:
         """
         Gives back the length of the longer feature vector between the model's and the one solved simbolically.
         """
-        # s = self.num.pm.simpify_feature()
-        s = self.opt.stlsq()
+
+        s = self.opt.get_optimizer_model()
         nm = self.num.symbolic_features()
         return max(s.shape[1],len(nm))
 
@@ -27,8 +27,8 @@ class DataframeForCoefficients:
         """
         Gives back the absolute difference of the length of the SINDY's feature vector and symbolically solved one.
         """
-        # s = len(self.num.pm.simpify_feature())
-        s = self.opt.stlsq().shape[1]
+
+        s = self.opt.get_optimizer_model().shape[1]
         nm = len(self.num.symbolic_features())
         return abs(nm - s)
 
@@ -39,7 +39,7 @@ class DataframeForCoefficients:
         if optimizer is None:
             coeff = self.num.symbolic_solution_coefficients()
         else:
-            coeff = getattr(self.opt,optimizer)()
+            coeff = self.opt.get_optimizer_model()
 
         coeff = np.atleast_2d(coeff) #ez azért h ha nem 2d-s shape
         if coeff.shape[0] == 1 and len(self.params["init"]) != 1:
@@ -136,4 +136,6 @@ class DataframeForCoefficients:
         df_nm = self.create_dataframe(nm_coeff, "nm")
         df = pd.concat([df_sindy, df_nm])
         print(tabulate(df, headers=self.create_header_for_df()))
+
+
 

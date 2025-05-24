@@ -1,11 +1,10 @@
 import ddeint
 import pysindy as ps
 import numpy as np
-from numpy.ma.core import argmin
 from sklearn.linear_model import Lasso, LinearRegression, Ridge
 import matplotlib.pyplot as plt
 
-def dde_optimizer(theta,X_dot):
+def gsls(theta, X_dot):
     Q = []
 
     lls = LinearRegression(fit_intercept=False)
@@ -82,10 +81,9 @@ N = 4000
 T = h * (N-1)
 num_of_points = N
 
-# s = np.linspace(1,int(8.5/h),int(8.5/h))
-s = np.linspace(int(3/h),int(8.5/h),int(5.5/h)) #just the index for the running tau
+# s = np.linspace(int(2/h),int(8.5/h),int(6.5/h)) #just the index for the running tau
+s = np.arange(int(3/h),int(8.5/h)+1)
 
-# tau_s = s * h
 
 #minta data.. ehhez hasonlitották az adatukat
 ts = np.linspace(0,T,N)
@@ -100,7 +98,7 @@ np.random.seed(42)
 noise = np.random.normal(loc=0.0, scale=0.01, size=data.shape) #scale = standard deviation
 # noise = np.zeros(data.shape)
 ys = data + noise
-# ys = ys + 0.011  * np.random.randn(*ys.shape)
+
 
 def plot_original_function():
     plt.rcParams["mathtext.fontset"] = "cm"
@@ -134,7 +132,7 @@ def find_model(ind):
     differentiation_method = ps.FiniteDifference(order=order)
     X_dot = differentiation_method._differentiate(X[:, 0], ts[ind:ind + len(X)])
 
-    Xi = dde_optimizer(theta, X_dot)  # ha Xi a cikk szerinti modon
+    Xi = gsls(theta, X_dot)  # ha Xi a cikk szerinti modon
     return X,Xi
 
 for ind in s:
@@ -168,7 +166,7 @@ def data_and_error():
     ax[0].plot(ts, ys)
     ax[0].plot(ts, data, color='red')
     ax[1].plot(info[:, 0], info[:, 1], marker='*', markerfacecolor='r', markersize=3, label='DDE')
-    plt.savefig("dde_noisy.pdf")
+    # plt.savefig("dde_noisy.pdf")
     plt.show()
 
 ############# SIMULATION ##################
@@ -196,4 +194,4 @@ def simulate(info):
     # plt.savefig("dde_learned_simulation2.pdf")
     plt.show()
 
-# simulate(info=info)
+simulate(info=info)

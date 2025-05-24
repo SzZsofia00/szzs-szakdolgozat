@@ -16,7 +16,7 @@ params = {
     'points_for_plot': 100,
     'scale': 1,
     'degree': 5,
-    'method': 'elastic',
+    'method': 'gsls',
     'alpha_ridge': 1.5,
     'alpha_lasso': 0.4,
     'alpha_elastic': 0.1
@@ -66,6 +66,7 @@ class Regression:
             model = Lasso(alpha=self.params['alpha_lasso'], fit_intercept=False)
         elif method == 'elastic':
             model = ElasticNet(alpha=self.params['alpha_elastic'], fit_intercept=False)
+            # model = ElasticNet(alpha=0.4,l1_ratio=0.6, fit_intercept=False)
         model.fit(self.time, self.data)
         return model
 
@@ -127,7 +128,7 @@ class Regression:
                     theta_tmp = np.delete(theta_tmp, i, axis=1)
 
                     lls.fit(theta_tmp, X_dot)
-                    Xi_tmp = np.array(lls.coef_).flatten()
+                    Xi_tmp = np.array(lls.coef_).T
 
                     err = np.linalg.norm(X_dot - theta_tmp @ Xi_tmp)
                     candidate_error.append((err, idx))

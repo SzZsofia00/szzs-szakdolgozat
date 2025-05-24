@@ -38,8 +38,7 @@ chaotic_eq = {
 
 methodsS = ["euler","midpoint_euler","RK3","RK4"] #method optimizer
 methodsNM = ["euler","midpoint_euler","RK3","RK4"]
-# optimizer = ["lls","ridge","lasso","stlsq"] #gsls-t kinyirja a alacsony h
-optimizer = ["lasso"]
+optimizer = ["lls","ridge","lasso","stlsq"]
 
 results = []
 num = 0
@@ -74,7 +73,6 @@ for eq_name,eq_func in equations.items():
             }
 
             for op in optimizer:
-                # op = "lls"
                 print(eq_name,mS,mNM,op)
                 dffc = DataframeForCoefficients(parameters)
                 sq_dev = dffc.squared_deviation(op)

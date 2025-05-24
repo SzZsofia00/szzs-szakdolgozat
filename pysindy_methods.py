@@ -4,7 +4,7 @@ from sklearn.linear_model import LinearRegression,Ridge, Lasso
 from symbol_creation import *
 
 class PysindyFunctions:
-    def __init__(self,matrix:np.array, t:np.array, order:int=2, degree:int=3, threshold:float=0.2):
+    def __init__(self,matrix:np.array, t:np.array, opt_method:str, order:int=2, degree:int=3, threshold:float=0.1):
         """
         Collection of pysindy function that going to be useful.
         :param np.array matrix: Matrix with the data values (calculated by SolveODE class)
@@ -17,16 +17,33 @@ class PysindyFunctions:
         self.t = t
         self.differentiation_method = ps.FiniteDifference(order=order)
         self.feature_library = ps.PolynomialLibrary(degree=degree)
-        # self.optimizer = LinearRegression(fit_intercept=False)
-        # self.optimizer = Ridge(fit_intercept=False,alpha=1.5)
-        # self.optimizer = Lasso(fit_intercept=False,alpha=0.2)
-        self.optimizer = ps.STLSQ(threshold=threshold)
+        self.threshold = threshold
+        self.opt_method = opt_method
+        self.optimizer = None
         self.cr = CreateSymbols(len(matrix))
+
+    def get_optimizer(self):
+        """
+        Choose an optimizer.
+        """
+        if self.opt_method == 'lls':
+            optimizer = LinearRegression(fit_intercept=False)
+        elif self.opt_method == 'ridge':
+            optimizer = Ridge(fit_intercept=False,alpha=1.5)
+        elif self.opt_method == 'lasso':
+            optimizer = Lasso(fit_intercept=False, alpha=0.2)
+        elif self.opt_method == 'stlsq':
+            optimizer = ps.STLSQ(threshold=self.threshold)
+        else:
+            print("ERROR - You didn't choose an optimizer method (lls, ridge, lasso, stlsq)!")
+            exit()
+        return optimizer
 
     def create_model(self) -> ps.SINDy:
         """
         Create a model for the equation.
         """
+        self.optimizer = self.get_optimizer()
         model = ps.SINDy(differentiation_method=self.differentiation_method,
                          feature_library=self.feature_library,
                          optimizer=self.optimizer,
@@ -50,12 +67,12 @@ class PysindyFunctions:
         """
         return model.equations(number_of_decimals)
 
-    def print_model_equations(self,model) -> None:
+    def print_model_equations(self,model,precision=3) -> None:
         """
         Print the model's equation we fitted on the data.
         :param model: The model we already fitted
         """
-        return model.print()
+        return model.print(precision=precision)
 
     def get_feature_names(self,model) -> list:
         """

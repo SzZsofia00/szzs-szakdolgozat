@@ -9,9 +9,6 @@ import timeit
 class Optimizers:
     def __init__(self,params,mtx,t):
         self.params = params
-        # self.so = SolveODE(self.params["diff_eq"], self.params["time"], self.params["init"], self.params["step_size"])
-        # self.mtx = self.so.get_matrix_with_noise(self.params["methodSy"], be_noise=self.params["be_noise"]).T
-        # self.t = self.so.create_time_points()
         self.mtx = mtx
         self.t = t
 
@@ -110,6 +107,12 @@ class Optimizers:
             break
         return Xi.T
 
+    def get_optimizer_model(self):
+        pm = PysindyFunctions(self.mtx.T, self.t, self.params["optimizer"], degree=self.params["degree"],
+                              threshold=self.params["threshold"])
+        model = pm.model_fit()
+        return pm.get_coefficients(model)
+
     def lls(self):
         X_dot = self.differentiation()
         theta = self.feature_library()
@@ -135,6 +138,6 @@ class Optimizers:
         return model.coef_
 
     def stlsq(self):
-        pm = PysindyFunctions(self.mtx.T, self.t, degree=self.params["degree"], threshold=self.params["threshold"])
+        pm = PysindyFunctions(self.mtx.T, self.t,self.params["optimizer"], degree=self.params["degree"], threshold=self.params["threshold"])
         model = pm.model_fit()
         return pm.get_coefficients(model)
